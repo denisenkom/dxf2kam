@@ -12,7 +12,8 @@ COMMCFLAGS = /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /Gm /EHsc /RTC1 /ML
 CFLAGS = $(COMMCFLAGS) /Yu"StdAfx.h"
 
 Dxf2Kam: $(OBJS)
-	$(CC) /Fe"$(TARGET).exe" /NOLOGO $(OBJS) $(ROOT)Parsers/Kamea/Lib/Debug/Kamea.lib
+	$(CC) /Fe"$(TARGET).exe" /NOLOGO $(OBJS) $(ROOT)Parsers/Kamea/Lib/Debug/Kamea.lib \
+		$(ROOT)Parsers/Dxf/Lib/Debug/Dxf.lib
 
 $(PCH): StdAfx.cpp StdAfx.h
 	$(CC) $(COMMCFLAGS) /Yc "StdAfx.h" StdAfx.cpp
