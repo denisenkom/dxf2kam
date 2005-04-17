@@ -1,18 +1,18 @@
 CC = cl.exe
+DEBUG = /Od /D "_DEBUG"  /ZI /Fd"$(OBJDIR)$(TARGET).pdb"
 OBJDIR = Debug/
 OBJS = $(OBJDIR)Dxf2Kam.obj $(OBJDIR)main.obj
 ROOT = d:/!mydata/programming/denisenko/
 TARGET = Dxf2Kam
 PCH = $(OBJDIR)$(TARGET).pch
 
-COMMCFLAGS = /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /Gm /EHsc /RTC1 /MLd \
-	/Fo"$(OBJDIR)" /Fp"$(PCH)" /Fd"$(OBJDIR)$(TARGET).pdb" /W3 /nologo \
-	/c /Wp64 /ZI /TP
+COMMCFLAGS = $(DEBUG) /EHsc /RTC1 /MLd /Fo"$(OBJDIR)" /Fp"$(PCH)" /c
 
 CFLAGS = $(COMMCFLAGS) /Yu"StdAfx.h"
+LFLAGS = /Fe"$(OBJDIR)$(TARGET).exe" $(DEBUG) 
 
 Dxf2Kam: $(OBJS)
-	$(CC) /Fe"$(TARGET).exe" /NOLOGO $(OBJS) $(ROOT)Parsers/Kamea/Lib/Debug/Kamea.lib \
+	$(CC) $(LFLAGS) $(OBJS) $(ROOT)Parsers/Kamea/Lib/Debug/Kamea.lib \
 		$(ROOT)Parsers/Dxf/Lib/Debug/Dxf.lib
 
 $(PCH): StdAfx.cpp StdAfx.h
