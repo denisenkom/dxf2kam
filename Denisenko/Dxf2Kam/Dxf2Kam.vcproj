@@ -137,31 +137,9 @@
 				RelativePath=".\stdafx.h">
 			</File>
 		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
-		</Filter>
-		<Filter
-			Name="Dxf"
-			Filter="">
-			<File
-				RelativePath=".\Dxf\dxf.cpp">
-			</File>
-			<File
-				RelativePath=".\Dxf\dxf.h">
-			</File>
-		</Filter>
-		<Filter
-			Name="Kamea"
-			Filter="">
-			<File
-				RelativePath=".\Kamea\Kamea.cpp">
-			</File>
-			<File
-				RelativePath=".\Kamea\Kamea.h">
-			</File>
-		</Filter>
+		<File
+			RelativePath=".\makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

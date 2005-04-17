@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "Dxf2Kam.h"
 
+#if 0
+
 namespace mgt=MyGeometryTools;
 using mgt::vec2f;
 using mgt::vec3f;
@@ -304,3 +306,5 @@ Kamea::program dxf2kam::convert(istream &input)
 }
 } // namespace Dxf2Kam
 } // namespace Denisenko
+
+#endif
