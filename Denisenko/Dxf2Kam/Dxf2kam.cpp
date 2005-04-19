@@ -2,11 +2,10 @@
 #include "Dxf2Kam.h"
 
 namespace Denisenko {
-namespace Utils {
 namespace Dxf2Kam {
 
-using namespace Denisenko::Parsers::Dxf;
-using namespace Denisenko::Parsers::Kamea;
+using namespace Dxf;
+using namespace Kamea;
 
 Program Convertor::Convert(const Database &in)
 {
@@ -329,5 +328,4 @@ Kamea::program dxf2kam::convert(istream &input)
 }
 #endif
 } // namespace Dxf2Kam
-} // namespace Utils
 } // namespace Denisenko

@@ -134,6 +134,9 @@
 				RelativePath=".\dxf2kam.h">
 			</File>
 			<File
+				RelativePath=".\Graph.h">
+			</File>
+			<File
 				RelativePath=".\stdafx.h">
 			</File>
 		</Filter>

@@ -5,7 +5,6 @@
 #include <Parsers\Dxf\Dxf.h>
 
 namespace Denisenko {
-namespace Utils {
 namespace Dxf2Kam {
 
 class Convertor
@@ -15,7 +14,6 @@ public:
 };
 
 } // namespace Dxf2Kam
-} // namespace Utils
 } // namespace Denisenko
 
 #endif // Dxf2KamH
