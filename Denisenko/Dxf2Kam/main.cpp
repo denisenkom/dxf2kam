@@ -3,10 +3,9 @@
 
 using namespace std;
 using namespace Denisenko;
-using namespace Denisenko::Parsers;
-using namespace Denisenko::Parsers::Dxf;
-using namespace Denisenko::Parsers::Kamea;
-using namespace Denisenko::Utils::Dxf2Kam;
+using namespace Denisenko::Dxf2Kam;
+using namespace Denisenko::Dxf2Kam::Dxf;
+using namespace Denisenko::Dxf2Kam::Kamea;
 
 int main(int argc, char *argv[])
 {

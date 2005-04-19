@@ -12,8 +12,7 @@ CFLAGS = $(COMMCFLAGS) /Yu"StdAfx.h"
 LFLAGS = /Fe"$(OBJDIR)$(TARGET).exe" $(DEBUG) 
 
 Dxf2Kam: $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) $(ROOT)Parsers/Kamea/Lib/Debug/Kamea.lib \
-		$(ROOT)Parsers/Dxf/Lib/Debug/Dxf.lib
+	$(CC) $(LFLAGS) $(OBJS) Kamea/Lib/Debug/Kamea.lib Dxf/Lib/Debug/Dxf.lib
 
 $(PCH): StdAfx.cpp StdAfx.h
 	$(CC) $(COMMCFLAGS) /Yc "StdAfx.h" StdAfx.cpp
