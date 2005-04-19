@@ -140,6 +140,10 @@
 				RelativePath=".\stdafx.h">
 			</File>
 		</Filter>
+		<Filter
+			Name="Dxf"
+			Filter="">
+		</Filter>
 		<File
 			RelativePath=".\makefile">
 		</File>
