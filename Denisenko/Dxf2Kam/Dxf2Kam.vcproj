@@ -143,9 +143,30 @@
 		<Filter
 			Name="Dxf"
 			Filter="">
+			<File
+				RelativePath=".\Dxf\Database.cpp">
+			</File>
+			<File
+				RelativePath=".\Dxf\dxf.cpp">
+			</File>
+			<File
+				RelativePath=".\Dxf\dxf.h">
+			</File>
+			<File
+				RelativePath=".\Dxf\DxfDatabase.h">
+			</File>
+			<File
+				RelativePath=".\Dxf\makefile">
+			</File>
+			<File
+				RelativePath=".\Dxf\stdafx.h">
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\makefile">
+		</File>
+		<File
+			RelativePath=".\test.dxf">
 		</File>
 	</Files>
 	<Globals>

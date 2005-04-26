@@ -1,6 +1,6 @@
 CC = cl.exe
 OBJDIR = Lib/Debug/
-OBJS = $(OBJDIR)Dxf.obj
+OBJS = $(OBJDIR)Dxf.obj $(OBJDIR)Database.obj
 ROOT = d:/!mydata/programming/denisenko/
 TARGET = Dxf
 PCH = $(OBJDIR)$(TARGET).pch
@@ -19,3 +19,6 @@ $(PCH): StdAfx.cpp StdAfx.h
 
 $(OBJDIR)Dxf.obj: Dxf.cpp Dxf.h $(PCH)
 	$(CC) $(CFLAGS) Dxf.cpp
+
+$(OBJDIR)Database.obj: Database.cpp DxfDatabase.h $(PCH)
+	$(CC) $(CFLAGS) Database.cpp

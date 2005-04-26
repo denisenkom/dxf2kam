@@ -1,60 +1,37 @@
 #ifndef DxfH
 #define DxfH
 
+#include <map>
+#include <istream>
+#include "DxfDatabase.h"
+
 namespace Denisenko {
 namespace Dxf2Kam {
 namespace Dxf {
 
-typedef std::list<class Node*> Nodes;
-typedef std::list<class Attribute*> Attributes;
 
-class Node
-{
-public:
-	Nodes Children;
-	Attributes Attributes;
+enum Manipulator {
+	Eof,
+	EndSection,
+	EndTable,
+	EndBlock,
+	BeginNode
 };
 
-class Attribute : public Node
-{
-public:
-	enum Type {String, Short, Long, Double, Boolean, Vector};
-
-	const char *GetName();
-
-	//explicit operator (const char *());
-	operator int();
-	operator float();
-	operator float*();
-
-	const char *GetValue();
-
-	Type        GetType();
-
-	Attribute(unsigned c, const char *value);
-	Attribute(int rem, std::string value[3]);
-
-private:
-	unsigned _code;
-	Type _type;
-	std::string _sVal[3];
-	union {
-		long _lVal;
-		short _shVal;
-		double _dVal;
-		bool _bVal;
-		double _vecVal[3];
-	};
-};
-
-class Database : public Node
+class Constructor
 {
 	std::string _xyz[10][3];
 	std::stack<Node*> _stack;
-    
+
 public:
-    void Load(const char *fileName);
-	void Save(const char *fileName);
+	Constructor& operator << (Manipulator);
+	Constructor& operator << (Attribute &);
+};
+
+class Parser
+{
+public:
+	static void Parse(std::istream &, Constructor &);
 };
 
 class ParseError

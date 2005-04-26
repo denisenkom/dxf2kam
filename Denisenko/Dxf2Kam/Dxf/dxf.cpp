@@ -34,19 +34,22 @@ void Database::Load(const char *fileName)
 				{
 					Node *b = _stack.top();
 					_stack.pop();
-					_stack.top()->Children.push_back(b);
+					_stack.top()->Children.insert(Nodes::value_type(
+						b->Attributes.begin()->second.GetValue(), b));
 				}
 			}
 			else if (str == "ENDTAB" || str == "ENDBLK")
 			{
 				Node *b = _stack.top();
 				_stack.pop();
-				_stack.top()->Children.push_back(b);
+				_stack.top()->Children.insert(Nodes::value_type(
+					b->Attributes.begin()->second.GetValue(), b));
 			}
 			else // new node
 			{
 				_stack.push(new Node());
-				_stack.top()->Attributes.push_back(new Attribute(0, str.c_str()));
+				_stack.top()->Attributes.insert(Attributes::value_type(code,
+					Attribute(0, str)));
 			}
 		}
 		else
@@ -58,16 +61,18 @@ void Database::Load(const char *fileName)
 				int fix = code / 10;
 				_xyz[rem][fix] = str;
 				if (fix == 3)
-					_stack.top()->Attributes.push_back(new Attribute(rem, _xyz[rem]));
+					_stack.top()->Attributes.insert(Attributes::value_type(rem,
+						Attribute(rem, _xyz[rem])));
 			}
 			else
 				// scalar param
-				_stack.top()->Attributes.push_back(new Attribute(code, str.c_str()));
+				_stack.top()->Attributes.insert(
+					Attributes::value_type(code, Attribute(code, str)));
 		}
 	}
 }
 
-Dxf::Attribute::Attribute(unsigned c, const char *value)
+Dxf::Attribute::Attribute(unsigned c, std::string value)
 {
 	_sVal[0] = value;
 	_code = c;
@@ -226,6 +231,96 @@ Dxf::Attribute::Attribute(int rem, string value[3])
 const char * Attribute::GetValue()
 {
 	return _sVal[0].c_str();
+}
+
+Constructor& Constructor::operator <<(Manipulator manip)
+{
+	Node *node;
+	switch (manip)
+	{
+	case Eof:
+		break;
+	case EndSection:
+		while (_stack.size() > 1)
+		{
+			node = _stack.top();
+			_stack.pop();
+			_stack.top()->Children.insert(Nodes::value_type(
+				node->Attributes.begin()->second.GetValue(), node));
+		}
+		break;
+	case EndBlock:
+	case EndTable:
+		node = _stack.top();
+		_stack.pop();
+		_stack.top()->Children.insert(Nodes::value_type(
+			node->Attributes.begin()->second.GetValue(), node));
+		break;
+	case BeginNode:
+		_stack.push(new Node());
+		break;
+	default:
+		assert(0/*invalid manip*/);
+		break;
+	}
+	return *this;
+}
+
+Constructor& Constructor::operator <<(Attribute &attr)
+{
+	_stack.top()->Attributes.insert(Attributes::value_type(attr.GetCode(), attr));
+	return *this;
+}
+
+void Parser::Parse(istream &stream, Constructor &constructor)
+{
+	char buf[1024];
+	string xyz[3];
+	while (stream)
+	{
+		// Getting code
+		//
+		stream.getline(buf, sizeof(buf));
+		int code = atoi(buf);
+
+		// Getting string
+		//
+		stream.getline(buf, sizeof(buf));
+		string str = buf;
+
+		if (code == 0) // 0 code for reserved words and nodes 
+		{
+			if (str == "EOF")
+			{
+				constructor << Eof;
+				break;
+			}
+			else if (str == "ENDSEC")
+				constructor << EndSection;
+			else if (str == "ENDTAB")
+				constructor << EndTable;
+			else if (str == "ENDBLK")
+				constructor << EndBlock;
+			else // new node like SECTION ENTITY TABLE BLOCK etc.
+			{
+				constructor << BeginNode;
+				constructor << Attribute(code, str);
+			}
+		}
+		else // other codes is attributes
+		{
+			if (code >= 10 && code <= 39) // 3d vector attribute
+			{
+				int rem = code % 10;
+				int fix = code / 10;
+				xyz[fix] = str;
+				if (fix == 3) // got last 3rd value
+					constructor << Attribute(rem, xyz[rem]);
+			}
+			else // scalar attribute	
+				constructor << Attribute(code, str);
+		}
+	}
 }
 
 const char * ParseError::GetMessageA()

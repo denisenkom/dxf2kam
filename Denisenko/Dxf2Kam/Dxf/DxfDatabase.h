@@ -6,7 +6,7 @@ namespace Dxf2Kam {
 namespace Dxf {
 
 typedef std::map<std::string, class Node*> Nodes;
-typedef std::map<unsigned, class Attribute*> Attributes;
+typedef std::map<unsigned, class Attribute> Attributes;
 
 class Node
 {
@@ -31,6 +31,8 @@ public:
 
 	Type        GetType();
 
+	unsigned GetCode();
+
 	Attribute(unsigned c, std::string value);
 	Attribute(int rem, std::string value[3]);
 
@@ -50,6 +52,8 @@ private:
 class Entity : public Node
 {
 public:
+	Entity(Node &source);
+
 	Attribute& Type();          // 0 Entity type
 
 	Attribute& Handle();        // 5 Handle
@@ -71,6 +75,9 @@ public:
 
 	Attribute& Visibility();    // 60 Object visibility (optional): 0 = Visible; 1 = Invisible (0)
 };
+
+typedef std::vector<Entity*> Entities;
+typedef Entities::iterator EntitiesIt;
 
 class Line : public Entity
 {
@@ -120,7 +127,7 @@ public:
 	Attribute& Start();    // 41 Start parameter (this value is 0.0 for a full ellipse)
 
 	Attribute& End();      // 42 End parameter (this value is 2pi for a full ellipse)
-}
+};
 
 class Database : public Node
 {
@@ -128,9 +135,11 @@ class Database : public Node
 	std::stack<Node*> _stack;
     
 public:
-	Children &Sections;
+	Nodes &Sections;
 
-	Children::iterator FindSection(const char *name);
+	Nodes::iterator FindSection(const char *name);
+
+	Entities GetEntities();
 
     void Load(const char *fileName);
 

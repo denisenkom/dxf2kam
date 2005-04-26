@@ -12,5 +12,6 @@
 #include <memory>
 #include <algorithm>
 #include <stack>
+#include <map>
 
 #include <windows.h>

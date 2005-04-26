@@ -22,7 +22,9 @@ public:
 	}
 
 
-	Traverse()
+	Traverse();
+
+	bool IsEmpty();
 };
 
 } // namespace Dxf2Kam
