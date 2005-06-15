@@ -3,6 +3,7 @@
 
 #include "Kamea\Kamea.h"
 #include "Dxf\Dxf.h"
+#include "Graph.h"
 
 namespace Denisenko {
 namespace Dxf2Kam {
@@ -10,7 +11,7 @@ namespace Dxf2Kam {
 class EntityBase
 {
 public:
-	virtual void AddToGraph(Graph &) = 0;
+	virtual void AddToGraph(Graph::Graph &) = 0;
 	virtual void Dispath(class Convertor &) = 0;
 };
 
@@ -20,7 +21,7 @@ class Entity : EntityBase
 public:
 	int Handle;
 
-	virtual void AddToGraph(Graph &);
+	virtual void AddToGraph(Graph::Graph &);
 	virtual void Dispath(class Convertor &);
 };
 
@@ -31,7 +32,7 @@ public:
 	float Start[3];
 	float End[3];
 
-	virtual void AddToGraph(Graph &);
+	virtual void AddToGraph(Graph::Graph &);
 	virtual void Dispath(class Convertor &);
 };
 
@@ -41,7 +42,7 @@ class Circle
 public:
 	float Center[3];
 	float Radius;
-	virtual void AddToGraph(Graph &);
+	virtual void AddToGraph(Graph::Graph &);
 	virtual void Dispath(class Convertor &);
 };
 
@@ -52,7 +53,7 @@ public:
 	float Start;
 	float End;
 
-	virtual void AddToGraph(Graph &);
+	virtual void AddToGraph(Graph::Graph &);
 	virtual void Dispath(class Convertor &);
 };
 
@@ -66,14 +67,14 @@ public:
 	float Start;
 	float End;
 
-	virtual void AddToGraph(Graph &);
+	virtual void AddToGraph(Graph::Graph &);
 	virtual void Dispath(class Convertor &);
 };
 
-class Path : private Arcs, public EntityBase
+class Path : private Graph::t_Arcs, public EntityBase
 {
 public:
-	virtual void AddToGraph(Graph &);
+	virtual void AddToGraph(Graph::Graph &);
 	virtual void Dispath(class Convertor &);
 };
 
@@ -81,9 +82,9 @@ class Factory
 {
 	Factory();
 public:
-	Entity * Create(const Dxf::Entity &);
-	Path * Create(const Arcs &);
-	Factory & GetInstance() {static Factory f; return f;};
+	Entity * Create(const Dxf::Entity &) {assert(0); return 0;};
+	Path * Create(const Graph::t_Arcs &) {assert(0); return 0;};
+	static Factory & GetInstance() {static Factory f; return f;};
 };
 
 class Convertor

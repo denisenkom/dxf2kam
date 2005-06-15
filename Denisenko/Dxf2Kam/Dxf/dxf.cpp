@@ -8,6 +8,10 @@ namespace Dxf {
 
 using namespace std;
 
+const short MAXSHORT = short(0x7fff);
+const short MINSHORT = short(0x8000);
+const int MAX_LINE_LENGTH = 1024;
+
 void Database::Load(const char *fileName)
 {
 	_stack.push(this);
@@ -17,7 +21,7 @@ void Database::Load(const char *fileName)
 
 	while (fs)
 	{
-		char buf[1024];
+		char buf[MAX_LINE_LENGTH];
 		fs.getline(buf, sizeof(buf));
 		int code = atoi(buf);
 
@@ -57,12 +61,12 @@ void Database::Load(const char *fileName)
 			if (code >= 10 && code <= 39)
 			{
 				// vector param
-				int rem = code % 10;
-				int fix = code / 10;
-				_xyz[rem][fix] = str;
-				if (fix == 3)
-					_stack.top()->Attributes.insert(Attributes::value_type(rem,
-						Attribute(rem, _xyz[rem])));
+				int loDigit = code % 10;
+				int hiDigit = code / 10;
+				_xyz[loDigit][hiDigit] = str;
+				if (hiDigit == 3)
+					_stack.top()->Attributes.insert(Attributes::value_type(loDigit,
+						Attribute(loDigit, _xyz[loDigit])));
 			}
 			else
 				// scalar param
@@ -180,15 +184,16 @@ Dxf::Attribute::Attribute(unsigned c, std::string value)
 		switch (_type)
 		{
 		case Short:
-			// TODO: check range
-			_shVal = res;
+			assert(MINSHORT <= res && res <= MAXSHORT);
+			_shVal = short(res);
 			break;
 		case Long:
 			_lVal = res;
 			break;
 		case Boolean:
 			// TODO: check value
-			_bVal = res;
+			assert(res == 0 || res == 1);
+			_bVal = res == 1 ? true : false;
 			break;
 		default:
 			assert(0); // should never get here
@@ -274,7 +279,7 @@ Constructor& Constructor::operator <<(Attribute &attr)
 
 void Parser::Parse(istream &stream, Constructor &constructor)
 {
-	char buf[1024];
+	char buf[MAX_LINE_LENGTH];
 	string xyz[3];
 	while (stream)
 	{

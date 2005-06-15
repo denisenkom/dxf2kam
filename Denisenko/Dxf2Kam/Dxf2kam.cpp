@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "Dxf2Kam.h"
+#include "Graph.h"
 
 namespace Denisenko {
 namespace Dxf2Kam {
@@ -12,33 +13,33 @@ Program Convertor::Convert(const Database &in)
 {
 	// Построение графа
 	//
-	Dxf::Entities dxfEntities = in.GetEntities();
+	/*Dxf::Entities dxfEntities = in.GetEntities();
 	Factory &factory = Factory::GetInstance();
-	Graph entitiesGraph;
+	Graph::Graph entitiesGraph;
 	for (Dxf::EntitiesIt i = dxfEntities.begin(); i != dxfEntities.end(); i++)
 	{
-		Entity *entity = factory.Create(*i);
+		Dxf2Kam::Entity *entity = factory.Create(**i);
 		entity->AddToGraph(entitiesGraph);
 	}
 
-	Graph pathesGraph;
+	Graph::Graph pathesGraph;
 	while (!entitiesGraph.IsEmpty())
 	{
-		Arcs path = entitiesGraph.FindBestPath();
+		Graph::t_Arcs path = entitiesGraph.FindBestPath();
 		factory.Create(path)->AddToGraph(pathesGraph);
 		entitiesGraph -= path;
 	}
 
-	Arcs path = pathesGraph.FindBestPath();
-	for (Arcs::const_iterator i = path.begin(); i != path.end(); i++)
-		if (Graph *graph = dynamic_cast<const Graph*>(*i))
+	Graph::t_Arcs path = pathesGraph.FindBestPath();
+	for (Graph::t_Arcs::const_iterator i = path.begin(); i != path.end(); i++)
+		if (Graph::Graph *graph = dynamic_cast<const Graph::Graph*>(&*i))
 		{
 		}
-		else if (Entity *entity = dynamic_cast<const Entity*>(*i))
+		else if (Entity *entity = dynamic_cast<const Entity*>(&*i))
 		{
 		}
 		else
-			assert(0);
+			assert(0);*/
 
 
 	// 1. Построить граф, вершины которого взвешены координатами геометрических элементов

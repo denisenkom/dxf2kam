@@ -162,6 +162,16 @@
 				RelativePath=".\Dxf\stdafx.h">
 			</File>
 		</Filter>
+		<Filter
+			Name="Kamea"
+			Filter="">
+			<File
+				RelativePath=".\Kamea\Kamea.cpp">
+			</File>
+			<File
+				RelativePath=".\Kamea\Kamea.h">
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\makefile">
 		</File>

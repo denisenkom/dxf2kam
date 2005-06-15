@@ -1,6 +1,8 @@
 #ifndef DxfDatabaseH
 #define DxfDatabaseH
 
+#include <vector>
+
 namespace Denisenko {
 namespace Dxf2Kam {
 namespace Dxf {
@@ -29,9 +31,9 @@ public:
 
 	const char *GetValue();
 
-	Type        GetType();
+	Type        GetType() {return _type;};
 
-	unsigned GetCode();
+	unsigned GetCode() {return _code;};
 
 	Attribute(unsigned c, std::string value);
 	Attribute(int rem, std::string value[3]);
@@ -135,11 +137,11 @@ class Database : public Node
 	std::stack<Node*> _stack;
     
 public:
-	Nodes &Sections;
+	Nodes Sections;
 
 	Nodes::iterator FindSection(const char *name);
 
-	Entities GetEntities();
+	Entities GetEntities() const;
 
     void Load(const char *fileName);
 
