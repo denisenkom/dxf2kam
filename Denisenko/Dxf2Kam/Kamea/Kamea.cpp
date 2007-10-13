@@ -177,9 +177,20 @@ void Program::LoadKam(const char *fileName)
 				throw InvalidCommandFormat(); //"", i, cmdId);
 			Statements.push_back(new Spline(points));
 			break;
-		
-		default: // SetPark, GoPark, SetZero, GoZero, Ret, EndLoop, Stop, Finish
+
+		case Statement::SetPark:
+		case Statement::GoPark:
+		case Statement::SetZero:
+		case Statement::GoZero:
+		case Statement::Ret:
+		case Statement::EndLoop:
+		case Statement::Stop:
+		case Statement::Finish:
 			Statements.push_back(new Statement(cmdId));
+			break;
+		
+		default:
+			assert(0);
 			break;
 		}
 	}
