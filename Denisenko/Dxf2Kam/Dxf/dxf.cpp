@@ -250,16 +250,14 @@ Constructor& Constructor::operator <<(Manipulator manip)
 		{
 			node = _stack.top();
 			_stack.pop();
-			_stack.top()->Children.insert(Nodes::value_type(
-				node->Attributes.begin()->second.GetValue(), node));
+			_stack.top()->Children.insert(make_pair(node->Attributes.begin()->second.GetValue(), node));
 		}
 		break;
 	case EndBlock:
 	case EndTable:
 		node = _stack.top();
 		_stack.pop();
-		_stack.top()->Children.insert(Nodes::value_type(
-			node->Attributes.begin()->second.GetValue(), node));
+		_stack.top()->Children.insert(make_pair(node->Attributes.begin()->second.GetValue(), node));
 		break;
 	case BeginNode:
 		_stack.push(new Node());
