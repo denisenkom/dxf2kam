@@ -1,15 +1,11 @@
-#include "StdAfx.h"
 #include <list>
+#include <iostream>
 #include "dxf.h"
-#include "dxf2kam.h"
-#include "modeler.h"
+#include "kamea.h"
 #include "geometry.h"
-#include "arc.h"
 
-namespace mgt=MyGeometryTools;
-using mgt::vec2f;
-using mgt::vec3f;
-using mgt::matrix2f;
+using namespace std;
+using namespace MyGeometryTools;
 
 namespace dxf2kam
 {
@@ -38,7 +34,7 @@ namespace dxf2kam
 
 	class line : public entity {
 	public:
-		mgt::vec3f p1, p2;
+		vec3f p1, p2;
 		line(int handle, float p1[3],
 			float p2[3], float thickness=0, int color=0)
 			: entity(handle, color, thickness), p1(p1), p2(p2)
@@ -47,17 +43,17 @@ namespace dxf2kam
 		virtual void dispatch(dispatcher &dispatcher) {dispatcher.line(*this);}
 		virtual float range2d(float vec[2])
 		{
-			return mgt::min((vec2f(p1) - vec2f(vec)).len(), (vec2f(p2) - vec2f(vec)).len());
+			return min((vec2f(p1) - vec2f(vec)).len(), (vec2f(p2) - vec2f(vec)).len());
 		}
 	};
 
-	class arc : public entity, mgt::arcf {
-		mgt::vec3f p1, p2;
+	class arc : public entity, arcf {
+		vec3f p1, p2;
 	public:
 		arc(int handle, float center[3],
 			float radius, float start_angle, float end_angle,
 			float thickness=0, int color=0)
-			: entity(handle, color, thickness), mgt::arcf(center, radius, start_angle, end_angle - start_angle),
+			: entity(handle, color, thickness), arcf(center, radius, start_angle, end_angle - start_angle),
 			p1(calcStartPoint(), center[2]), p2(calcEndPoint(), center[2])
 		{
 		}
@@ -65,9 +61,9 @@ namespace dxf2kam
 		virtual void dispatch(dispatcher &dispatcher) {dispatcher.arc(*this);}
 		virtual float range2d(float vec[2])
 		{
-			return mgt::min((vec2f(p1) - vec2f(vec)).len(), (vec2f(p2) - vec2f(vec)).len());
+			return min((vec2f(p1) - vec2f(vec)).len(), (vec2f(p2) - vec2f(vec)).len());
 		}
-		float getRadius(void) {return mgt::arcf::getRadius();}
+		float getRadius(void) {return arcf::getRadius();}
 		vec3f getStartPoint(void) {return p1;}
 		vec3f getEndPoint(void) {return p2;}
 		float & z1(void) {return p1.z;}
@@ -86,7 +82,7 @@ namespace dxf2kam
 		circle(int handle, float center[3],
 			float radius, float thickness=0, int color=0)
 			: entity(handle, color, thickness), center(center),
-			radius(mgt::abs(radius))
+			radius(abs(radius))
 		{
 		}
 		virtual void dispatch(dispatcher &dispatcher) {dispatcher.circle(*this);}
@@ -105,7 +101,7 @@ namespace dxf2kam
 			: entity(handle, color, thickness), center(vcenter), major(majr),
 			ratio(ratio), start_angle(start_angle), sweep_angle(end_angle - start_angle)
 		{
-			mgt::arcf arc(vec2f(0, 0), major.len(), start_angle, sweep_angle);
+			arcf arc(vec2f(0, 0), major.len(), start_angle, sweep_angle);
 			matrix2f mtform = matrix2f::rotate(major.angle())*matrix2f::scale(1, ratio);
 			p1 = vec3f(center + mtform*arc.calcStartPoint(), 0);
 			p2 = vec3f(center + mtform*arc.calcEndPoint(), 0);
@@ -113,7 +109,7 @@ namespace dxf2kam
 		virtual void dispatch(dispatcher &dispatcher) {dispatcher.ellipse(*this);}
 		virtual float range2d(float vec[2])
 		{
-			return mgt::min((vec2f(p1) - vec2f(vec)).len(), (vec2f(p2) - vec2f(vec)).len());
+			return min((vec2f(p1) - vec2f(vec)).len(), (vec2f(p2) - vec2f(vec)).len());
 		}
 		vec3f getStartPoint(void) const {return p1;}
 		vec3f getEndPoint(void) const {return p2;}
@@ -177,8 +173,6 @@ namespace dxf2kam
 		}
 	};
 
-	using std::istream;
-
 	class convertor : public dispatcher, public Kamea::ProgramWriter {
 		virtual void circle(class circle &circle);
 		virtual void arc(class arc &arc);
@@ -223,7 +217,7 @@ void dxf2kam::convertor::circle(class circle &circle)
 	setSpeed(cut_speed);
 	displace(vec3f(0, 0, circle.center.z - getPos().z));
 	//displace(vec3f(0, 0, circle.center.z - getPos().z));
-	ProgramWriter::arc(circle.getRadius(), float((-dir).angle()), float(2*mgt::pi));
+	ProgramWriter::arc(circle.getRadius(), float((-dir).angle()), float(2*pi));
 	entities.erase(mini);
 }
 
@@ -300,8 +294,18 @@ Kamea::Program dxf2kam::convertor::convert(istream &stream)
 	return end();
 }
 
-Kamea::Program dxf2kam::convert(istream &input)
+int main(int argc, char * argv[])
 {
-	convertor convertor;
-	return convertor.convert(input);
+	try
+	{
+		dxf2kam::convertor convertor;
+		Kamea::Program program = convertor.convert(cin);
+		Kamea::save(cout, program);
+	}
+	catch (exception & ex)
+	{
+		cerr << ex.what();
+		return 1;
+	}
+	return 0;
 }

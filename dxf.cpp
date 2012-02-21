@@ -1,25 +1,21 @@
 // dxf.cpp : Defines the entry point for the console application.
 //
 #include <stdexcept>
-#include "stdafx.h"
+#include <iostream>
+#include <cassert>
+#include <cstdlib>
 #include "dxf.h"
-#include "dxf2kam.h"
-#include "file.h"
-#include "arc.h"
+#include "geometry.h"
 
 using namespace std;
 using namespace dxf;
 
 using MyGeometryTools::grad2rad;
 
-class invalid_format : public std::runtime_error
-{
-};
-
-class convert_error : public std::runtime_error
+class EConvertError : public std::runtime_error
 {
 public:
-	convert_error(const char *cstr)
+	EConvertError(const char *cstr)
 		: std::runtime_error(cstr)
 	{
 	}
@@ -118,14 +114,15 @@ namespace dxf {
 		entity& by_index(size_t index);
 	};*/
 
-	class Stream
+	class Reader
 	{
-		std::istream &_stream;
 		bool next_code_string;
 		int code;
 	public:
-		Stream(std::istream &str)
-			:_stream(str), next_code_string(true)
+		std::istream &stream;
+		
+		Reader(std::istream &str)
+			:stream(str), next_code_string(true)
 		{
 		}
 
@@ -138,7 +135,7 @@ namespace dxf {
 
 	class Parser
 	{
-		Stream stream;
+		Reader reader;
 		//database database;
 		Factory &factory;
 		void unknown_entity(string entity_name);
@@ -162,76 +159,76 @@ namespace dxf {
 	};
 }
 
-int dxf::Stream::get_code(void)
+int dxf::Reader::get_code(void)
 {
 	if (!next_code_string)
 		return code;
 	char buf[1024];
-	_stream.getline(buf, sizeof(buf), '\n');
+	stream.getline(buf, sizeof(buf));
 	next_code_string = false;
 	code = atoi(buf);
 	return code;
 }
 
-string dxf::Stream::get_string(void)
+string dxf::Reader::get_string(void)
 {
 	assert(!next_code_string);
 	char buf[1024];
-	_stream.getline(buf, sizeof(buf), '\n');
+	stream.getline(buf, sizeof(buf));
 	next_code_string = true;
 	return string(buf);
 }
 
-float dxf::Stream::get_float(void)
+float dxf::Reader::get_float(void)
 {
 	assert(!next_code_string);
 	char buf[1024];
-	_stream.getline(buf, sizeof(buf), '\n');
+	stream.getline(buf, sizeof(buf), '\n');
 	next_code_string = true;
 	char *stopchar;
 	float retval = float(strtod(buf, &stopchar));
 	if (stopchar == 0)
-		throw convert_error(buf);
+		throw EConvertError(buf);
 	return retval;
 }
 
-int dxf::Stream::get_int(void)
+int dxf::Reader::get_int(void)
 {
 	assert(!next_code_string);
 	char buf[1024];
-	_stream.getline(buf, sizeof(buf), '\n');
+	stream.getline(buf, sizeof(buf), '\n');
 	next_code_string = true;
 	return atoi(buf);
 }
 
 dxf::Parser::Parser(istream &stream, dxf::Factory &factory)
-	: stream(stream), factory(factory)
+	: reader(stream), factory(factory)
 {
 }
 
 void dxf::Parser::unknown_entity(string entity_name)
 {
-	cout << "skip entity - " << entity_name << endl;
+	cerr << "skip entity - " << entity_name << endl;
 	int code;
 	string string;
-	while(1)
+	while(!reader.stream.eof())
 	{
-		code = stream.get_code();
-		string = stream.get_string();
+		code = reader.get_code();
 		if (code == 0)
 			break;
+		string = reader.get_string();
 	}
 }
 
 void dxf::Parser::unknown_section(string section_name)
 {
-	cout << "skip section - " << section_name << endl;
+	//cerr << "skip section - " << section_name << endl;
 	int code;
 	string string;
 	while(1)
 	{
-		code = stream.get_code();
-		string = stream.get_string();
+		code = reader.get_code();
+		string = reader.get_string();
 		if (code == 0 && string == "ENDSEC")
 			break;
 	}
@@ -243,16 +240,16 @@ void dxf::Parser::unknown_section(string section_name)
 
 class AcDbSymbolTableRecord {
 public:
-	static AcDbSymbolTableRecord* from_dxf(dxf::Stream & stream)
+	static AcDbSymbolTableRecord* from_dxf(dxf::Reader & reader)
 	{
-		int code = stream.get_code();
+		int code = reader.get_code();
 		if (code == 100)
 		{
-			if (stream.get_string() == "AcDbLayerTableRecord")
-				return AcDbLayerTableRecord::from_dxf(stream);
+			if (reader.get_string() == "AcDbLayerTableRecord")
+				return AcDbLayerTableRecord::from_dxf(reader);
 		}
 		else
-			stream.get_string();
+			reader.get_string();
 	}
 };
 
@@ -267,26 +264,26 @@ public:
 	int hPlotStyleName;
 	string line_type_name;
 
-	static AcDbLayerTableRecord * from_dxf(dxf::Stream &stream)
+	static AcDbLayerTableRecord * from_dxf(dxf::Reader &reader)
 	{
 		while (1)
 		{
 			AcDbLayerTableRecord *rec = new AcDbLayerTableRecord();
-			int code = stream.get_code();
+			int code = reader.get_code();
 			if (code == 2)
-				rec->name = stream.get_string();
+				rec->name = reader.get_string();
 			else if (code == 70)
-				rec->flags = stream.get_int();
+				rec->flags = reader.get_int();
 			else if (code == 62)
-				rec->color = stream.get_int();
+				rec->color = reader.get_int();
 			else if (code == 6)
-				rec->line_type_name = stream.get_string();
+				rec->line_type_name = reader.get_string();
 			else if (code == 290)
-				rec->plot_flag = stream.get_int();
+				rec->plot_flag = reader.get_int();
 			else if (code == 370)
-				rec->line_weight = stream.get_int();
+				rec->line_weight = reader.get_int();
 			else if (code == 390)
-				rec->hPlotStyleName = stream.get_int();
+				rec->hPlotStyleName = reader.get_int();
 			else
 				break;
 		}
@@ -297,23 +294,23 @@ public:
 class AcDbSymbolTable {
 public:
 	int max_number_entries;
-	static AcDbSymbolTable from_dxf(dxf::Stream &stream)
+	static AcDbSymbolTable from_dxf(dxf::Reader &reader)
 	{
 		AcDbSymbolTable table;
 		while (1)
 		{
-			int code = stream.get_code();
+			int code = reader.get_code();
 			if (code == 0)
 				break;
 			else if (code == 70)
-				table.max_number_entries = stream.get_int();
+				table.max_number_entries = reader.get_int();
 			else if (code == 100)
 			{
-				if (stream.get_string() == "AcDbSymbolTable")
-					AcDbSymbolTable::from_dxf(stream);
+				if (reader.get_string() == "AcDbSymbolTable")
+					AcDbSymbolTable::from_dxf(reader);
 			}
 			else
-				stream.get_string();
+				reader.get_string();
 		}
 		return table;
 	}
@@ -326,24 +323,24 @@ void dxf::Parser::parseTable()
 	AcDbSymbolTable table;
 	while (1)
 	{
-		int code = stream.get_code();
+		int code = reader.get_code();
 		if (code == 0)
 		{
-			if (stream.get_string() == "ENDTAB")
+			if (reader.get_string() == "ENDTAB")
 				break;
 		}
 		else if (code == 2)
-			table_name = stream.get_string();
+			table_name = reader.get_string();
 		else if (code == 5)
-			handle = stream.get_int();
+			handle = reader.get_int();
 		else if (code == 100)
 		{
-			if (stream.get_string() == "AcDbSymbolTable")
-				table = AcDbSymbolTable::from_dxf(stream);
+			if (reader.get_string() == "AcDbSymbolTable")
+				table = AcDbSymbolTable::from_dxf(reader);
 			//break;
 		}
 		else
-			stream.get_string();
+			reader.get_string();
 
 	}
 	//if (table_name == "LAYER")
@@ -354,17 +351,17 @@ void dxf::Parser::parseTablesSec()
 {
 	while (1)
 	{
-		int code = stream.get_code();
+		int code = reader.get_code();
 		if (code == 0)
 		{
-			string string = stream.get_string();
+			string string = reader.get_string();
 			if (string == "TABLE")
 				parseTable();
 			else if (string == "ENDSEC")
 				break;
 		}
 		else
-			stream.get_string();
+			reader.get_string();
 			//break;
 	}
 }*/
@@ -376,48 +373,48 @@ void dxf::Parser::parseParams(int &par5, float &par10, float &par20, float &par3
 {
 	while (1)
 	{
-		int code = stream.get_code();
+		int code = reader.get_code();
 		if (code == 0)
 			break;
 		else if (code == 5)
-			par5 = stream.get_int();
+			par5 = reader.get_int();
 		else if (code == 10)
-			par10 = stream.get_float();
+			par10 = reader.get_float();
 		else if (code == 20)
-			par20 = stream.get_float();
+			par20 = reader.get_float();
 		else if (code == 30)
-			par30 = stream.get_float();
+			par30 = reader.get_float();
 		else if (code == 11)
-			par11 = stream.get_float();
+			par11 = reader.get_float();
 		else if (code == 21)
-			par21 = stream.get_float();
+			par21 = reader.get_float();
 		else if (code == 31)
-			par31 = stream.get_float();
+			par31 = reader.get_float();
 		else if (code == 39)
-			par39 = stream.get_float();
+			par39 = reader.get_float();
 		else if (code == 40)
-			par40 = stream.get_float();
+			par40 = reader.get_float();
 		else if (code == 41)
-			par41 = stream.get_float();
+			par41 = reader.get_float();
 		else if (code == 42)
-			par42 = stream.get_float();
+			par42 = reader.get_float();
 		else if (code == 50)
-			par50 = stream.get_float();
+			par50 = reader.get_float();
 		else if (code == 51)
-			par51 = stream.get_float();
+			par51 = reader.get_float();
 		else if (code == 62)
-			par62 = stream.get_int();
+			par62 = reader.get_int();
 		else
-			stream.get_string();	// skip
+			reader.get_string();	// skip
 	}
 }
 
 void dxf::Parser::parseEntitiesSec()
 {
-	while(1)
+	while(!reader.stream.eof())
 	{
-		int code = stream.get_code();
-		string string = stream.get_string();
+		int code = reader.get_code();
+		string string = reader.get_string();
 		int handle = 0, color = 0;
 		float p1[3] = {0, 0, 0}, p2[3] = {0, 0, 0};
 		float ratio = 0, start_angle = 0, end_angle = 0, thickness = 0, start_par=0, end_par=0;
@@ -443,16 +440,16 @@ void dxf::Parser::parseEntitiesSec()
 
 void dxf::Parser::parse()
 {
-	while (1)
+	while (!reader.stream.eof())
 	{
-		int code = stream.get_code();
-		string string = stream.get_string();
+		int code = reader.get_code();
+		string string = reader.get_string();
 		if (string == "EOF")
 			break;
 		else if (string == "SECTION")
 		{
-			code = stream.get_code();
-			string = stream.get_string();
+			code = reader.get_code();
+			string = reader.get_string();
 			/*if (string == "TABLES")
 				parseTablesSec();
 			else*/ if (string == "ENTITIES")
@@ -463,14 +460,8 @@ void dxf::Parser::parse()
 	}
 }
 
-void dxf::parse(istream &stream, Factory &factory)
+void dxf::parse(istream &reader, Factory &factory)
 {
-	Parser parser(stream, factory);
+	Parser parser(reader, factory);
 	parser.parse();
 }
-
-int _tmain(int argc, _TCHAR* argv[])
-{
-	return 0;
-}
-
