@@ -1,6 +1,6 @@
 namespace dxf
 {
-	class factory
+	class Factory
 	{
 	public:
 		virtual void circle(int handle, float center[3], float radius, float thickness=0, int color=0)=0;
@@ -10,5 +10,5 @@ namespace dxf
 		virtual void point(int handle, float pt[3], float thickness=0, int color=0)=0;
 		virtual void spline(int handle, float thickness=0, int color=0)=0;
 	};
-	void parse(std::istream &stream, factory &factory);
+	void parse(std::istream &stream, Factory &factory);
 }

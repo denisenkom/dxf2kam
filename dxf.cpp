@@ -1,6 +1,6 @@
 // dxf.cpp : Defines the entry point for the console application.
 //
-
+#include <stdexcept>
 #include "stdafx.h"
 #include "dxf.h"
 #include "dxf2kam.h"
@@ -12,15 +12,15 @@ using namespace dxf;
 
 using MyGeometryTools::grad2rad;
 
-class invalid_format : public exception
+class invalid_format : public std::runtime_error
 {
 };
 
-class convert_error : public exception
+class convert_error : public std::runtime_error
 {
 public:
 	convert_error(const char *cstr)
-		: exception(cstr)
+		: std::runtime_error(cstr)
 	{
 	}
 };
@@ -118,13 +118,13 @@ namespace dxf {
 		entity& by_index(size_t index);
 	};*/
 
-	class stream
+	class Stream
 	{
 		std::istream &_stream;
 		bool next_code_string;
 		int code;
 	public:
-		stream(std::istream &str)
+		Stream(std::istream &str)
 			:_stream(str), next_code_string(true)
 		{
 		}
@@ -136,11 +136,11 @@ namespace dxf {
 		float get_float(void);
 	};
 
-	class parser
+	class Parser
 	{
-		stream stream;
+		Stream stream;
 		//database database;
-		factory &factory;
+		Factory &factory;
 		void unknown_entity(string entity_name);
 		void unknown_section(string section_name);
 		void parseParams(int &par5, float &par10, float &par20, float &par30,
@@ -157,12 +157,12 @@ namespace dxf {
 		//void line(int handle, double x1, double y1, double z1, double x2, double y2, double z2, double thickness=0, int color=0);
 		//void ellipse(int handle, double cx, double cy, double cz, double mx, double my, double mz, double ratio, double start_angle, double end_angle, double thickness=0, int color=0);
 	public:
-		parser(istream &stream, dxf::factory &factory);
+		Parser(istream &stream, dxf::Factory &factory);
 		void parse(void);
 	};
 }
 
-int dxf::stream::get_code(void)
+int dxf::Stream::get_code(void)
 {
 	if (!next_code_string)
 		return code;
@@ -173,7 +173,7 @@ int dxf::stream::get_code(void)
 	return code;
 }
 
-string dxf::stream::get_string(void)
+string dxf::Stream::get_string(void)
 {
 	assert(!next_code_string);
 	char buf[1024];
@@ -182,7 +182,7 @@ string dxf::stream::get_string(void)
 	return string(buf);
 }
 
-float dxf::stream::get_float(void)
+float dxf::Stream::get_float(void)
 {
 	assert(!next_code_string);
 	char buf[1024];
@@ -195,7 +195,7 @@ float dxf::stream::get_float(void)
 	return retval;
 }
 
-int dxf::stream::get_int(void)
+int dxf::Stream::get_int(void)
 {
 	assert(!next_code_string);
 	char buf[1024];
@@ -204,12 +204,12 @@ int dxf::stream::get_int(void)
 	return atoi(buf);
 }
 
-dxf::parser::parser(istream &stream, dxf::factory &factory)
+dxf::Parser::Parser(istream &stream, dxf::Factory &factory)
 	: stream(stream), factory(factory)
 {
 }
 
-void dxf::parser::unknown_entity(string entity_name)
+void dxf::Parser::unknown_entity(string entity_name)
 {
 	cout << "skip entity - " << entity_name << endl;
 	int code;
@@ -223,7 +223,7 @@ void dxf::parser::unknown_entity(string entity_name)
 	}
 }
 
-void dxf::parser::unknown_section(string section_name)
+void dxf::Parser::unknown_section(string section_name)
 {
 	cout << "skip section - " << section_name << endl;
 	int code;
@@ -237,13 +237,13 @@ void dxf::parser::unknown_section(string section_name)
 	}
 }
 
-/*void dxf::parser::parseLayerTable()
+/*void dxf::Parser::parseLayerTable()
 {
 }
 
 class AcDbSymbolTableRecord {
 public:
-	static AcDbSymbolTableRecord* from_dxf(dxf::stream & stream)
+	static AcDbSymbolTableRecord* from_dxf(dxf::Stream & stream)
 	{
 		int code = stream.get_code();
 		if (code == 100)
@@ -267,7 +267,7 @@ public:
 	int hPlotStyleName;
 	string line_type_name;
 
-	static AcDbLayerTableRecord * from_dxf(dxf::stream &stream)
+	static AcDbLayerTableRecord * from_dxf(dxf::Stream &stream)
 	{
 		while (1)
 		{
@@ -297,7 +297,7 @@ public:
 class AcDbSymbolTable {
 public:
 	int max_number_entries;
-	static AcDbSymbolTable from_dxf(dxf::stream &stream)
+	static AcDbSymbolTable from_dxf(dxf::Stream &stream)
 	{
 		AcDbSymbolTable table;
 		while (1)
@@ -319,7 +319,7 @@ public:
 	}
 };
 
-void dxf::parser::parseTable()
+void dxf::Parser::parseTable()
 {
 	string table_name;
 	int handle;
@@ -350,7 +350,7 @@ void dxf::parser::parseTable()
 	//	parseLayerTable();
 }
 
-void dxf::parser::parseTablesSec()
+void dxf::Parser::parseTablesSec()
 {
 	while (1)
 	{
@@ -369,7 +369,7 @@ void dxf::parser::parseTablesSec()
 	}
 }*/
 
-void dxf::parser::parseParams(int &par5, float &par10, float &par20, float &par30,
+void dxf::Parser::parseParams(int &par5, float &par10, float &par20, float &par30,
 		   float &par11, float &par21, float &par31, float par39, float &par40, float &par41, float &par42,
 		   float &par50, float &par51,
 		   int &par62)
@@ -412,7 +412,7 @@ void dxf::parser::parseParams(int &par5, float &par10, float &par20, float &par3
 	}
 }
 
-void dxf::parser::parseEntitiesSec()
+void dxf::Parser::parseEntitiesSec()
 {
 	while(1)
 	{
@@ -441,7 +441,7 @@ void dxf::parser::parseEntitiesSec()
 	}
 }
 
-void dxf::parser::parse()
+void dxf::Parser::parse()
 {
 	while (1)
 	{
@@ -463,81 +463,14 @@ void dxf::parser::parse()
 	}
 }
 
-void dxf::parse(istream &stream, factory &factory)
+void dxf::parse(istream &stream, Factory &factory)
 {
-	parser parser(stream, factory);
+	Parser parser(stream, factory);
 	parser.parse();
-}
-
-LRESULT CALLBACK proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-	PAINTSTRUCT ps;
-	string str = "WWW";
-	RECT rect = {0, 0, 100, 100};
-	POINT pts[] = {{0,0},{100, 100},{100, 200},{200, 200}};
-	switch (msg)
-	{
-	case WM_PAINT:
-
-		BeginPaint(hwnd, &ps);
-		DrawText(ps.hdc, str.c_str(), str.size(), &rect, DT_CENTER);
-		PolyBezier(ps.hdc, pts, 4);
-		EndPaint(hwnd, &ps);
-		return 0;
-
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-
-	default:
-		return DefWindowProc(hwnd, msg, wparam, lparam);
-	}
-}
-
-void testing_font_antialiasing(void)
-{
-	const char *class_name = "myclass", *window_name = "My window";
-	WNDCLASS wndcls = {0};
-	wndcls.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-	wndcls.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW));
-	wndcls.hInstance = GetModuleHandle(NULL);
-	wndcls.lpfnWndProc = proc;
-	wndcls.lpszClassName = class_name;
-	RegisterClass(&wndcls);
-	HWND hwnd = CreateWindow(class_name, window_name, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
-	CreateWindow("Button", "&да", WS_CHILDWINDOW | WS_VISIBLE | BS_AUTORADIOBUTTON, 10, 200, 100, 30, hwnd, 0, 0, 0);
-	ShowWindow(hwnd, SW_SHOW);
-	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		DispatchMessage(&msg);
-	}
-}
-
-void test1(void)
-{
-	//ifstream str("D:\\Work\\source\\SEMIL\\DXF2KAM\\circle.dxf");
-	ifstream str("c:\\Данила-Мастер\\drawing1.dxf");
-	if (!str)
-		throw exception("not opened");
-	Kamea::program prog(dxf2kam::convert(str));
-	ofstream ostr("circle.kam");
-	if (!ostr)
-		throw exception("not opened");
-	Kamea::save(ostr, prog);
-	//parse(str, factory);
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	try
-	{
-		testing_font_antialiasing();
-	}
-	catch (exception &ex)
-	{
-		cout << ex.what();
-	}
 	return 0;
 }
 

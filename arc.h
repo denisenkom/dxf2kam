@@ -31,7 +31,7 @@ namespace MyGeometryTools {
 	};
 
 	template <class scalar>
-	class arc
+	class Arc
 	{
 		scalar radius;	// радиус дуги >0
 		//double a1, a2;	// начальный и конечный углы дуги
@@ -45,18 +45,18 @@ namespace MyGeometryTools {
 		vec2<scalar> center;
 		scalar start_angle, sweep_angle;
 
-		arc(scalar center[2], scalar radius, scalar start_angle, scalar sweep_angle)	// Дуга по центру, радиусу, начальному углу и углу поворота
+		Arc(scalar center[2], scalar radius, scalar start_angle, scalar sweep_angle)	// Дуга по центру, радиусу, начальному углу и углу поворота
 			: center(center), radius(abs(radius)), start_angle(start_angle), sweep_angle(sweep_angle)
 		{
 		}
-		static arc by_3_points(scalar p1[2], scalar p2[2], scalar p3[2]);	// Дуга по 3-м точкам
-		static arc by_2_pt_rad_rot(scalar p1[2], scalar p2[2], scalar radius, bool ccw, bool left);	// дуга по 2-м точкам, радиусу и направлению вращения, и расположению центра слева или справа от вектора (a1,a2) (радиус > 0)
-		static arc by_pt_rad_ang(scalar pt[2], scalar radius, scalar start_angle, scalar sweep_angle)	// Дуга по начальной точке, радиусу, начальному углу и углу поворота
+		static Arc by_3_points(scalar p1[2], scalar p2[2], scalar p3[2]);	// Дуга по 3-м точкам
+		static Arc by_2_pt_rad_rot(scalar p1[2], scalar p2[2], scalar radius, bool ccw, bool left);	// дуга по 2-м точкам, радиусу и направлению вращения, и расположению центра слева или справа от вектора (a1,a2) (радиус > 0)
+		static Arc by_pt_rad_ang(scalar pt[2], scalar radius, scalar start_angle, scalar sweep_angle)	// Дуга по начальной точке, радиусу, начальному углу и углу поворота
 		{
 			scalar k = tan(start_angle);
 			scalar rx = radius/sqrt(1+sqr(k)), ry = k*rx;
 			vec2<scalar> center(pt[0] + rx, pt[1] + ry);
-			return arc(center, radius, start_angle, sweep_angle);
+			return Arc(center, radius, start_angle, sweep_angle);
 		}
 
 		void vectorize(Vectorizator<double> &vectorizator);	// векторизация дуги
@@ -72,8 +72,8 @@ namespace MyGeometryTools {
 		vec2<scalar> calcEndPoint(void) {return vec2<scalar>::by_len_ang(radius, start_angle+sweep_angle) + center;}
 	};
 
-	typedef arc<float> arcf;
-	typedef arc<double> arcd;
+	typedef Arc<float> arcf;
+	typedef Arc<double> arcd;
 
 	class Discretizator {
 		static unsigned discretization;

@@ -145,7 +145,7 @@ namespace dxf2kam
 	typedef std::vector<entity*> t_entities_vector;
 	typedef std::list<entity*> t_entities_list;
 
-	class factory : public dxf::factory
+	class Factory : public dxf::Factory
 	{
 	public:
 		typedef t_entities_list t_entities;
@@ -179,7 +179,7 @@ namespace dxf2kam
 
 	using std::istream;
 
-	class convertor : public dispatcher, public Kamea::program_writer {
+	class convertor : public dispatcher, public Kamea::ProgramWriter {
 		virtual void circle(class circle &circle);
 		virtual void arc(class arc &arc);
 		virtual void line(class line &line);
@@ -190,7 +190,7 @@ namespace dxf2kam
 		t_entities_list::iterator mini;
 		void optimize();
 	public:
-		Kamea::program convert(istream &);
+		Kamea::Program convert(istream &);
 	};
 }
 
@@ -203,11 +203,11 @@ void dxf2kam::convertor::arc(class arc &arc)
 	displace(vec3f(0, 0, arc.z1() - getPos().z));
 	if (arc.z1() == arc.z2())
 	{
-		program_writer::arc(arc.getRadius(), arc.getStartAngle(), arc.getSweepAngle());
+		ProgramWriter::arc(arc.getRadius(), arc.getStartAngle(), arc.getSweepAngle());
 	}
 	else
 	{
-		//program_writer::arc();
+		//ProgramWriter::arc();
 	}
 	entities.erase(mini);
 }
@@ -223,7 +223,7 @@ void dxf2kam::convertor::circle(class circle &circle)
 	setSpeed(cut_speed);
 	displace(vec3f(0, 0, circle.center.z - getPos().z));
 	//displace(vec3f(0, 0, circle.center.z - getPos().z));
-	program_writer::arc(circle.getRadius(), float((-dir).angle()), float(2*mgt::pi));
+	ProgramWriter::arc(circle.getRadius(), float((-dir).angle()), float(2*mgt::pi));
 	entities.erase(mini);
 }
 
@@ -245,7 +245,7 @@ void dxf2kam::convertor::ellipse(class ellipse &ellipse)
 	displace(vec3f(0, 0, ellipse.getStartPoint().z - getPos().z));
 	setRotate(ellipse.getMajor().angle());
 	setScale(vec3f(1, ellipse.getRatio(), 1));
-	program_writer::arc(ellipse.getMajor().len(), ellipse.getStartAngle(), ellipse.getSweepAngle());
+	ProgramWriter::arc(ellipse.getMajor().len(), ellipse.getStartAngle(), ellipse.getSweepAngle());
 	setScale(vec3f(1, 1, 1));
 	setRotate(0);
 	entities.erase(mini);
@@ -290,9 +290,9 @@ void dxf2kam::convertor::optimize()
 	}
 }
 
-Kamea::program dxf2kam::convertor::convert(istream &stream)
+Kamea::Program dxf2kam::convertor::convert(istream &stream)
 {
-	factory factory;
+	Factory factory;
 	dxf::parse(stream, factory);
 	entities = factory.entities;
 	begin();
@@ -300,7 +300,7 @@ Kamea::program dxf2kam::convertor::convert(istream &stream)
 	return end();
 }
 
-Kamea::program dxf2kam::convert(istream &input)
+Kamea::Program dxf2kam::convert(istream &input)
 {
 	convertor convertor;
 	return convertor.convert(input);

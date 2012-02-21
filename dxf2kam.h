@@ -2,5 +2,5 @@
 
 namespace dxf2kam
 {
-	Kamea::program convert(std::istream &);
+	Kamea::Program convert(std::istream &);
 }

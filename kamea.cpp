@@ -14,29 +14,29 @@ void test1(void)
 {
 	ifstream str1("D:\\Work\\source\\SEMIL\\KAMEA\\drawing.kam");
 	if (!str1)
-		throw exception("open error");
-	program program = load(str1);
+		throw runtime_error("open error");
+	Program program = load(str1);
 	ofstream str2("out.kam");
 	if (!str2)
-		throw exception("open error");
+		throw runtime_error("open error");
 	save(str2, program);
 }
 
 void test2(void)
 {
-	program program;
+	Program program;
 	program.addCommand(auto_ptr<command>(new CCOMMENT("xxx")));
 	{
 		ofstream str2("out.kam");
 		if (!str2)
-			throw exception("open error");
+			throw runtime_error("open error");
 		save(str2, program);
 	}
 
 	{
 		ifstream str1("out.kam");
 		if (!str1)
-			throw exception("open error");
+			throw runtime_error("open error");
 		program = load(str1);
 	}
 }
@@ -45,8 +45,8 @@ void test3(void)
 {
 	ifstream str1("c:\\semil\\files\\44.kam");
 	if (!str1)
-		throw exception("open error");
-	program program = load(str1);
+		throw runtime_error("open error");
+	Program program = load(str1);
 }
 
 int _tmain(int argc, _TCHAR* argv[])

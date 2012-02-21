@@ -8,9 +8,9 @@ using std::istream;
 using std::ios;
 using std::auto_ptr;
 
-Kamea::program Kamea::load(istream &stream)
+Kamea::Program Kamea::load(istream &stream)
 {
-	program program;
+	Program program;
 	stream.exceptions(ios::eofbit | ios::badbit | ios::failbit);
 	unsigned short cmds_num;
 	stream.read(reinterpret_cast<char*>(&cmds_num), 2);

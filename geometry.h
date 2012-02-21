@@ -1,6 +1,6 @@
 #pragma once
 
-#include <math.h>
+#include <cmath>
 
 namespace MyGeometryTools {
 	template <typename scalar> scalar sin(scalar);
@@ -27,7 +27,7 @@ namespace MyGeometryTools {
 
 	inline double abs(double x) {return ::fabs(x);}
 	inline float abs(float x) {return ::fabsf(x);}
-	inline int abs(int x) {return ::abs(x);}
+	inline int abs(int x) {return std	::abs(x);}
 
 #ifdef min
 	#undef min
@@ -122,7 +122,7 @@ namespace MyGeometryTools {
 				sin(angle), cos(angle));
 		}
 
-		static matrix2 scale(scalar x, scalar y = x)
+		static matrix2 scale(scalar x, scalar y)
 		{
 			return matrix2(
 				x, 0,

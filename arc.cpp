@@ -1,5 +1,7 @@
 //#include "StdAfx.h"
-#include "Arc.h"
+#include <stdexcept>
+#include <cassert>
+#include "arc.h"
 
 namespace MyGeometryTools {
 
@@ -32,25 +34,25 @@ namespace MyGeometryTools {
 	const char *radius_too_small = "Радиус слишком малый.";
 	const char *null_arc = "Точки дуги не должны распологаться на одной прямой, также они не должны совпадать.";
 
-#ifndef NDEBUG
+/*#ifndef NDEBUG
 	void Arc::__assert(void) {
 		assert(this->radius > 0);
 	}
-#endif
+#endif*/
 
-	Arc::Arc(double cx, double cy, double radius, double start_angle, double sweep_angle, bool ccw)
+	/*Arc::Arc(double cx, double cy, double radius, double start_angle, double sweep_angle, bool ccw)
 		: cx(cx), cy(cy), radius(radius), start_angle(start_angle), sweep_angle(sweep_angle)
 	{
 		if (radius <= 0)
 			throw std::runtime_error(radius_must_be_greater_then_zero);
-		/*while (a1 < 0) a1 += 2*pi;
+		while (a1 < 0) a1 += 2*pi;
 		while (a1 >= 2*pi) a1 -= 2*pi;
 		this->a1 = a1;
 		while (a2 < 0) a2 += 2*pi;
 		while (a2 >= 2*pi) a2 -= 2*pi;
-		this->a2 = a2;*/
+		this->a2 = a2;
 		__assert();
-	}
+	}*/
 
 	/*Arc::Arc(double x1, double y1, double x2, double y2, double r, bool ccw, bool left)
 		: ccw(ccw)
@@ -78,7 +80,7 @@ namespace MyGeometryTools {
 		__assert();
 	}*/
 
-	Arc::Arc(double x1, double y1, double x2, double y2, double x3, double y3)
+	/*Arc::Arc(double x1, double y1, double x2, double y2, double x3, double y3)
 	{
 		double det = 2*((x1-x3)*(y2-y3)-(x2-x3)*(y1-y3));
 		if (det == 0)
@@ -103,7 +105,7 @@ namespace MyGeometryTools {
 			sweep_angle += (ang1 < ang3) ? -2*pi : 2*pi;
 		assert(sweep_angle < 2*pi && sweep_angle > -2*pi);
 		__assert();
-	}
+	}*/
 
 	/*void Arc::vectorize(Vectorizator<double> &vectorizator)
 	{

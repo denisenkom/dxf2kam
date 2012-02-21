@@ -1,6 +1,8 @@
-#include "StdAfx.h"
+#include <stdexcept>
+#include <iostream>
 #include <string>
-#include <assert.h>
+#include <cassert>
+#include <cstring>
 #include "file.h"
 #include "opcodes.h"
 #include "operations.h"
@@ -11,7 +13,7 @@ using std::for_each;
 
 namespace Kamea
 {
-	class saver_dispatcher : public dispatcher {
+	class SaverDispatcher : public Dispatcher {
 		virtual void command(class CPP_LINE&);
 		virtual void command(class CPP_ARC&);
 		virtual void command(class CPR_ARC&);
@@ -56,44 +58,44 @@ namespace Kamea
 		size_t _param_l;
 		char _cmdbuf[256];
 	public:
-		saver_dispatcher(ostream &stream) : stream(stream)
+		SaverDispatcher(ostream &stream) : stream(stream)
 		{
 			//memset(_cmdbuf, 0, sizeof(_cmdbuf));
 		}
 	};
 }
 
-void Kamea::saver_dispatcher::_check_constraints() {
-	if (!stream)
+void Kamea::SaverDispatcher::_check_constraints() {
+	if (stream.bad())
 		throw std::runtime_error("Файл не открыт или ошибка ввода-вывода.");
 }
 
-/*void Kamea::saver_dispatcher::beginCommands(size_t numcommands)
+/*void Kamea::SaverDispatcher::beginCommands(size_t numcommands)
 {
 	_check_constraints();
 	stream.write(reinterpret_cast<char*>(&numcommands), 2);
 }
 
-void Kamea::saver_dispatcher::beginPoints(size_t numpoints)
+void Kamea::SaverDispatcher::beginPoints(size_t numpoints)
 {
 	_check_constraints();
 	pstream->write(reinterpret_cast<char*>(&numpoints), 2);
 }*/
 
-inline void Kamea::saver_dispatcher::_before(ECmdId cmdId) {
+inline void Kamea::SaverDispatcher::_before(ECmdId cmdId) {
 	_check_constraints();
 	_param_l = 0;
 	char cmd_id = cmdId;
 	stream.write(&cmd_id, 1);
 }
 
-inline void Kamea::saver_dispatcher::_write_spd(ESpeed spd)
+inline void Kamea::SaverDispatcher::_write_spd(ESpeed spd)
 {
 	if (spd != SPDDEF)
 		_param_l += sprintf(_cmdbuf+_param_l, ",%u", spd);
 }
 
-inline void Kamea::saver_dispatcher::_after() {
+inline void Kamea::SaverDispatcher::_after() {
 	if (_param_l > 30)
 		throw std::runtime_error("Слишком длинная строка параметров в команде ТТ ДУГА");
 	char cparam_l = static_cast<char>(_param_l);
@@ -101,7 +103,7 @@ inline void Kamea::saver_dispatcher::_after() {
 	stream.write(_cmdbuf, 30);
 }
 
-void Kamea::saver_dispatcher::command(CPP_LINE &cmd) {
+void Kamea::SaverDispatcher::command(CPP_LINE &cmd) {
 	_before(PP_LINE);
 	_param_l = sprintf(_cmdbuf, "%u,%u,%.1f", cmd.startPoint, cmd.endPoint, cmd.deltaZ);
 	_write_spd(cmd.speed);
@@ -110,91 +112,91 @@ void Kamea::saver_dispatcher::command(CPP_LINE &cmd) {
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CPP_ARC &cmd) {
+void Kamea::SaverDispatcher::command(CPP_ARC &cmd) {
 	_before(PP_ARC);
 	_param_l = sprintf(_cmdbuf, "%u,%u,%u", cmd.startPoint, cmd.midPoint, cmd.endPoint);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CPR_ARC &cmd) {
+void Kamea::SaverDispatcher::command(CPR_ARC &cmd) {
 	_before(PR_ARC);
 	_param_l = sprintf(_cmdbuf, "%u,%u,%.1f", cmd.startPoint, cmd.endPoint, cmd.radius);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CPZ_ARC &cmd) {
+void Kamea::SaverDispatcher::command(CPZ_ARC &cmd) {
 	_before(PZ_ARC);
 	_param_l = sprintf(_cmdbuf, "%u,%u,%u,%.1f", cmd.startPoint, cmd.midPoint, cmd.endPoint, cmd.deltaZ);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CPRZ_ARC &cmd) {
+void Kamea::SaverDispatcher::command(CPRZ_ARC &cmd) {
 	_before(PRZ_ARC);
 	_param_l = sprintf(_cmdbuf, "%u,%u,%.1f,%.1f", cmd.startPoint, cmd.endPoint, cmd.radius, cmd.deltaZ);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CLINE &cmd) {
+void Kamea::SaverDispatcher::command(CLINE &cmd) {
 	_before(LINE);
 	_param_l = sprintf(_cmdbuf, "%.1f,%.1f,%.1f", cmd.dx, cmd.dy, cmd.dz);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CARC &cmd) {
+void Kamea::SaverDispatcher::command(CARC &cmd) {
 	_before(ARC);
 	_param_l = sprintf(_cmdbuf, "%.1f,%.1f,%.1f", cmd.radius, cmd.al, cmd.fi);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CREL_ARC &cmd) {
+void Kamea::SaverDispatcher::command(CREL_ARC &cmd) {
 	_before(REL_ARC);
 	_param_l = sprintf(_cmdbuf, "%.1f,%.1f,%.1f", cmd.dx, cmd.dy, cmd.radius);
 	_write_spd(cmd.speed);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CSET_PARK &cmd) {
+void Kamea::SaverDispatcher::command(CSET_PARK &cmd) {
 	_simple(SET_PARK);
 }
 
-void Kamea::saver_dispatcher::command(CGO_PARK &cmd) {
+void Kamea::SaverDispatcher::command(CGO_PARK &cmd) {
 	_simple(GO_PARK);
 }
 
-void Kamea::saver_dispatcher::command(CSET_ZERO &cmd) {
+void Kamea::SaverDispatcher::command(CSET_ZERO &cmd) {
 	_simple(SET_ZERO);
 }
 
-void Kamea::saver_dispatcher::command(CGO_ZERO &cmd) {
+void Kamea::SaverDispatcher::command(CGO_ZERO &cmd) {
 	_simple(GO_ZERO);
 }
 
-void Kamea::saver_dispatcher::command(CON &cmd) {
+void Kamea::SaverDispatcher::command(CON &cmd) {
 	_before(ON);
 	_param_l = sprintf(_cmdbuf, "%u", cmd.device);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(COFF &cmd) {
+void Kamea::SaverDispatcher::command(COFF &cmd) {
 	_before(OFF);
 	_param_l = sprintf(_cmdbuf, "%u", cmd.device);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CSPEED &cmd) {
+void Kamea::SaverDispatcher::command(CSPEED &cmd) {
 	assert(cmd.speed >= 1 && cmd.speed <= 8);
 	_before(SPEED);
 	_param_l = sprintf(_cmdbuf, "%u", cmd.speed);
 	_after();
 }
 
-inline void Kamea::saver_dispatcher::_scale(ECmdId cmd_id, unsigned oldscale, unsigned newscale, bool relative)
+inline void Kamea::SaverDispatcher::_scale(ECmdId cmd_id, unsigned oldscale, unsigned newscale, bool relative)
 {
 	_before(cmd_id);
 	_param_l = sprintf(_cmdbuf, "%u,%u", oldscale, newscale);
@@ -203,25 +205,25 @@ inline void Kamea::saver_dispatcher::_scale(ECmdId cmd_id, unsigned oldscale, un
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CSCALEX &cmd) {
+void Kamea::SaverDispatcher::command(CSCALEX &cmd) {
 	_scale(SCALE_X, cmd.old_scale, cmd.new_scale, cmd.relative);
 }
 
-void Kamea::saver_dispatcher::command(CSCALEY &cmd) {
+void Kamea::SaverDispatcher::command(CSCALEY &cmd) {
 	_scale(SCALE_Y, cmd.old_scale, cmd.new_scale, cmd.relative);
 }
 
-void Kamea::saver_dispatcher::command(CSCALEZ &cmd) {
+void Kamea::SaverDispatcher::command(CSCALEZ &cmd) {
 	_scale(SCALE_Z, cmd.old_scale, cmd.new_scale, cmd.relative);
 }
 
-void Kamea::saver_dispatcher::command(CTURN &cmd) {
+void Kamea::SaverDispatcher::command(CTURN &cmd) {
 	_before(TURN);
 	_param_l = sprintf(_cmdbuf, "%u,%u,%.1f", cmd.mirrorX, cmd.mirrorY, cmd.angle);
 	_after();
 }
 
-inline void Kamea::saver_dispatcher::_text(ECmdId cmd_id, string str)
+inline void Kamea::SaverDispatcher::_text(ECmdId cmd_id, string str)
 {
 	_before(cmd_id);
 	strcpy(_cmdbuf, str.c_str());
@@ -229,61 +231,61 @@ inline void Kamea::saver_dispatcher::_text(ECmdId cmd_id, string str)
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CSUB &cmd) {
+void Kamea::SaverDispatcher::command(CSUB &cmd) {
 	_text(SUB, cmd.name);
 }
 
-void Kamea::saver_dispatcher::command(CCALL &cmd) {
+void Kamea::SaverDispatcher::command(CCALL &cmd) {
 	_text(CALL, cmd.sub_name);
 }
 
-inline void Kamea::saver_dispatcher::_simple(ECmdId cmd_id)
+inline void Kamea::SaverDispatcher::_simple(ECmdId cmd_id)
 {
 	_before(cmd_id);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CRET &cmd) {
+void Kamea::SaverDispatcher::command(CRET &cmd) {
 	_simple(RET);
 }
 
-void Kamea::saver_dispatcher::command(CLABEL &cmd) {
+void Kamea::SaverDispatcher::command(CLABEL &cmd) {
 	_text(LABEL, cmd.name);
 }
 
-void Kamea::saver_dispatcher::command(CGOTO &cmd) {
+void Kamea::SaverDispatcher::command(CGOTO &cmd) {
 	_text(Kamea::GOTO, cmd.label_name);
 }
 
-void Kamea::saver_dispatcher::command(CLOOP &cmd) {
+void Kamea::SaverDispatcher::command(CLOOP &cmd) {
 	_before(Kamea::LOOP);
 	_param_l = sprintf(_cmdbuf, "%u", cmd.n);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CENDLOOP &cmd) {
+void Kamea::SaverDispatcher::command(CENDLOOP &cmd) {
 	_simple(ENDLOOP);
 }
 
-void Kamea::saver_dispatcher::command(CSTOP &cmd) {
+void Kamea::SaverDispatcher::command(CSTOP &cmd) {
 	_simple(STOP);
 }
 
-void Kamea::saver_dispatcher::command(CFINISH &cmd) {
+void Kamea::SaverDispatcher::command(CFINISH &cmd) {
 	_simple(FINISH);
 }
 
-void Kamea::saver_dispatcher::command(CPAUSE &cmd) {
+void Kamea::SaverDispatcher::command(CPAUSE &cmd) {
 	_before(PAUSE);
 	_param_l = sprintf(_cmdbuf, "%.1f", cmd.delay);
 	_after();
 }
 
-void Kamea::saver_dispatcher::command(CCOMMENT &cmd) {
+void Kamea::SaverDispatcher::command(CCOMMENT &cmd) {
 	_text(COMMENT, cmd.comment);
 }
 
-void Kamea::saver_dispatcher::command(CSPLINE &cmd)
+void Kamea::SaverDispatcher::command(CSPLINE &cmd)
 {
 	_before(PAUSE);
 	_param_l = sprintf(_cmdbuf, "%i,%i,%i,%i", cmd.p1, cmd.p2, cmd.p3, cmd.p4);
@@ -293,9 +295,9 @@ void Kamea::saver_dispatcher::command(CSPLINE &cmd)
 namespace Kamea
 {
 	class func1 {
-		dispatcher &dispatcher;
+		Dispatcher &dispatcher;
 	public:
-		func1(Kamea::dispatcher &dispatcher) : dispatcher(dispatcher) {}
+		func1(Kamea::Dispatcher &dispatcher) : dispatcher(dispatcher) {}
 		void operator () (command *pcommand) {assert(pcommand); pcommand->dispatch(dispatcher);}
 	};
 
@@ -311,12 +313,12 @@ namespace Kamea
 	};
 }
 
-void Kamea::save(ostream &stream, program &program)
+void Kamea::save(ostream &stream, Program &program)
 {
 	// saving comands
 	size_t commands = program.getCommands().size();
 	stream.write(reinterpret_cast<char*>(&commands), 2);
-	saver_dispatcher dispatcher(stream);
+	SaverDispatcher dispatcher(stream);
 	func1 func1(dispatcher);
 	for_each(program.getCommands().begin(), program.getCommands().end(), func1);
 	// saving points

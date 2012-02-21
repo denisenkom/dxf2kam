@@ -1,12 +1,13 @@
+#include <stdexcept>
 #include "opcodes.h"
 
 namespace Kamea
 {
-	class parse_error : public exception {
+	class parse_error : public std::runtime_error {
 	public:
 		unsigned cmd_indx;
 		parse_error(const char *desc, unsigned cmd_indx)
-			: exception(desc), cmd_indx(cmd_indx)
+			: std::runtime_error(desc), cmd_indx(cmd_indx)
 		{
 		}
 	};

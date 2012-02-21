@@ -1,4 +1,4 @@
 namespace Kamea {
-	class program load(std::istream&);
-	void save(std::ostream&, class program&);
+	class Program load(std::istream&);
+	void save(std::ostream&, class Program&);
 }	// namespace Kamea

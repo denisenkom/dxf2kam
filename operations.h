@@ -11,30 +11,30 @@ namespace Kamea {
 
 class command {
 public:
-	virtual void dispatch(class dispatcher&)=0;
+	virtual void dispatch(class Dispatcher&)=0;
 };
 
 typedef std::vector<command*> t_commands_vector;
 typedef std::vector<class point> t_points_vector;
 
-class program {
+class Program {
 	typedef t_commands_vector t_commands;
 	t_commands commands;
 	struct del_cmd {void operator () (command *pcmd) {delete pcmd;}} del_cmd;
-	struct zero {void operator() (command *&pcmd) {pcmd = 0;}} zero;
+	struct Zero {void operator() (command *&pcmd) {pcmd = 0;}} zero;
 public:
 	typedef t_points_vector t_points;
 	t_points points;
 
-	program(void) {}
+	Program(void) {}
 
-	program(program &other)
+	Program(Program && other)
 		: commands(other.commands), points(other.points)
 	{
 		std::for_each(other.commands.begin(), other.commands.end(), zero);
 	}
 
-	program & operator = (program &other)
+	Program & operator = (Program && other)
 	{
 		if (this == &other)
 			return *this;
@@ -44,12 +44,12 @@ public:
 		return *this;
 	}
 
-	~program() {std::for_each(commands.begin(), commands.end(), del_cmd);}
+	~Program() {std::for_each(commands.begin(), commands.end(), del_cmd);}
 	void addCommand(std::auto_ptr<command> pcommand) {commands.push_back(pcommand.release());}
 	const t_commands & getCommands(void) const {return commands;}
 };
 
-class dispatcher {
+class Dispatcher {
 public:
 	virtual void command(class CPP_LINE&)=0;
 	virtual void command(class CPP_ARC&)=0;
@@ -97,7 +97,7 @@ public:
 };
 
 class CPP_LINE : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = PP_LINE;
 	unsigned startPoint, endPoint;
@@ -109,7 +109,7 @@ public:
 };
 
 class CPP_ARC : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = PP_ARC;
 	unsigned startPoint, midPoint, endPoint;
@@ -119,7 +119,7 @@ public:
 };
 
 class CPR_ARC : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = PR_ARC;
 	unsigned startPoint, endPoint;
@@ -130,7 +130,7 @@ public:
 };
 
 class CPZ_ARC : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = PZ_ARC;
 	unsigned startPoint, midPoint, endPoint;
@@ -142,7 +142,7 @@ public:
 };
 
 class CPRZ_ARC : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = PRZ_ARC;
 	unsigned startPoint, endPoint;
@@ -154,7 +154,7 @@ public:
 };
 
 class CLINE : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = LINE;
 	float dx, dy, dz;
@@ -164,7 +164,7 @@ public:
 };
 
 class CARC : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = ARC;
 	float radius, al, fi;
@@ -174,7 +174,7 @@ public:
 };
 
 class CREL_ARC : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = REL_ARC;
 	float dx, dy, radius;
@@ -184,35 +184,35 @@ public:
 };
 
 class CSET_PARK : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SET_PARK;
 	CSET_PARK() {};
 };
 
 class CGO_PARK : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = GO_PARK;
 	CGO_PARK() {};
 };
 
 class CSET_ZERO : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SET_ZERO;
 	CSET_ZERO() {};
 };
 
 class CGO_ZERO : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = GO_ZERO;
 	CGO_ZERO() {};
 };
 
 class CON : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = ON;
 	EDevice device;
@@ -220,7 +220,7 @@ public:
 };
 
 class COFF : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = OFF;
 	EDevice device;
@@ -228,7 +228,7 @@ public:
 };
 
 class CSPEED : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SPEED;
 	ESpeed speed;
@@ -236,7 +236,7 @@ public:
 };
 
 class CSCALEX : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SCALE_X;
 	bool relative;
@@ -246,7 +246,7 @@ public:
 };
 
 class CSCALEY : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SCALE_Y;
 	bool relative;
@@ -256,7 +256,7 @@ public:
 };
 
 class CSCALEZ : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SCALE_Z;
 	bool relative;
@@ -266,7 +266,7 @@ public:
 };
 
 class CTURN : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = TURN;
 	bool mirrorX;
@@ -277,7 +277,7 @@ public:
 };
 
 class CSUB : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = SUB;
 	std::string name;
@@ -285,7 +285,7 @@ public:
 };
 
 class CCALL : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = CALL;
 	std::string sub_name;
@@ -293,13 +293,13 @@ public:
 };
 
 class CRET : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = RET;
 };
 
 class CLABEL : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = LABEL;
 	std::string name;
@@ -307,7 +307,7 @@ public:
 };
 
 class CGOTO : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = GOTO;
 	std::string label_name;
@@ -315,7 +315,7 @@ public:
 };
 
 class CLOOP : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = LOOP;
 	unsigned n;
@@ -323,25 +323,25 @@ public:
 };
 
 class CENDLOOP : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = ENDLOOP;
 };
 
 class CSTOP : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = STOP;
 };
 
 class CFINISH : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = FINISH;
 };
 
 class CCOMMENT : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = COMMENT;
 	std::string comment;
@@ -349,7 +349,7 @@ public:
 };
 
 class CPAUSE : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	const static ECmdId id = PAUSE;
 	float delay;
@@ -357,7 +357,7 @@ public:
 };
 
 class CSPLINE : public command {
-	void dispatch(dispatcher& dispatcher) {dispatcher.command(*this);};
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
 	unsigned p1, p2, p3, p4;
 	CSPLINE(unsigned p1, unsigned p2, unsigned p3, unsigned p4)	: p1(p1), p2(p2), p3(p3), p4(p4) {}

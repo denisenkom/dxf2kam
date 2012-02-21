@@ -1,27 +1,25 @@
+#include <stdexcept>
 #include "opcodes.h"
 #include "operations.h"
 #include "geometry.h"
 
-// disables "C++ exception spec ignored" warning
-#pragma warning( disable : 4290 )
-
 namespace Kamea {
 
-	class invalid_speed : public std::exception
+	class EInvalidSpeed : public std::runtime_error
 	{
 	public:
 		ESpeed spd;
-		invalid_speed(const char *desc, ESpeed spd)
-			: exception(desc), spd(spd)
+		EInvalidSpeed(const char *desc, ESpeed spd)
+			: std::runtime_error(desc), spd(spd)
 		{
 		}
 	};
 
-	class modeler {
+	class Modeler {
 	public:
 		virtual void switchDevice(EDevice, bool on)=0;
 		virtual bool getDevice(EDevice)=0;
-		virtual void setSpeed(ESpeed) throw (invalid_speed) = 0;
+		virtual void setSpeed(ESpeed) = 0;
 		virtual ESpeed getSpeed(void) = 0;
 
 		virtual void setMirror(const bool xy[2])=0;
@@ -39,14 +37,14 @@ namespace Kamea {
 		virtual MyGeometryTools::vec3f getPos(void)=0;
 	};
 
-	class program_writer : modeler {
+	class ProgramWriter : Modeler {
 		MyGeometryTools::vec3f pos;
 		ESpeed speed;
 		bool spindle;
 		float rotate_angle;
 		MyGeometryTools::vec3f scale;
 		bool mirror_xy[2];
-		program program;
+		Program program;
 		MyGeometryTools::vec3f tform(MyGeometryTools::vec3f vec);
 	public:
 		ESpeed move_speed, cut_speed;
@@ -71,8 +69,8 @@ namespace Kamea {
 
 		virtual MyGeometryTools::vec3f getPos(void);
 
-		program_writer();
+		ProgramWriter();
 		void begin(void);
-		Kamea::program end(void);
+		Program end(void);
 	};
 }	// namespace Kamea
