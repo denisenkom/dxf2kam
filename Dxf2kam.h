@@ -1,8 +1,8 @@
 #ifndef Dxf2KamH
 #define Dxf2KamH
 
-#include "Kamea\Kamea.h"
-#include "Dxf\Dxf.h"
+#include "kamea.h"
+#include "dxf.h"
 #include "Graph.h"
 
 namespace Denisenko {
