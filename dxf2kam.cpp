@@ -4,6 +4,8 @@
 #include "kamea.h"
 #include "geometry.h"
 
+#undef major
+
 using namespace std;
 using namespace MyGeometryTools;
 
