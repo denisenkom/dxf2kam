@@ -4,5 +4,11 @@
 *.vspscc
 *.scc
 *.user
+*.sdf
+*.opensdf
+UpgradeLog.XML
+UpgradeLog2.XML
+_UpgradeReport_Files
 Debug
 Release
+ipch
