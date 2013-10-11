@@ -84,8 +84,7 @@
   <ItemGroup>
     <ClCompile Include="..\dxf.cpp" />
     <ClCompile Include="..\dxf2kam.cpp" />
-    <ClCompile Include="..\modeler.cpp" />
-    <ClCompile Include="..\saver.cpp" />
+    <ClCompile Include="..\kamea.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -96,6 +95,7 @@
     <ClInclude Include="..\dxf.h" />
     <ClInclude Include="..\dxf2kam.h" />
     <ClInclude Include="..\geometry.h" />
+    <ClInclude Include="..\kamea.h" />
     <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
