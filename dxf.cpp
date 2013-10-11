@@ -1,6 +1,7 @@
 // dxf.cpp : Defines the entry point for the console application.
 //
 #include <stdexcept>
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <map>
