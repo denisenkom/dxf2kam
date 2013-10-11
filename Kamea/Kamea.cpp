@@ -220,41 +220,41 @@ void Program::SaveKam(const char *fileName)
 		case Statement::PPLine:{
 			PPLine &s = *(PPLine*)*i;
 			sprintf(cmdbuf, "%u,%u,%f,%u", s.PointRefs[0], s.PointRefs[1], s.DeltaZ,
-				s.Speed);
+				s.Value);
 			updownRelat = true;
 			updownRelatVal = s.UpDown;}
 			break;
 		case Statement::PPArc:{
 			PPArc &s = *(PPArc*)*i;
 			sprintf(cmdbuf, "%u,%u,%u,%u", s.PointRefs[0], s.PointRefs[1], s.PointRefs[2],
-				s.Speed);}
+				s.Value);}
 			break;
 		case Statement::PRArc:{
 			PRArc &s = *(PRArc*)*i;
 			sprintf(cmdbuf, "%u,%u,%f,%u", s.PointRefs[0], s.PointRefs[1], s.Radius,
-				s.Speed);}			
+				s.Value);}			
 			break;
 		case Statement::PZArc:{
 			PZArc &s = *(PZArc*)*i;
 			sprintf(cmdbuf, "%u,%u,%u,%f,%u", s.PointRefs[0], s.PointRefs[1],
-				s.PointRefs[2], s.DeltaZ, s.Speed);}
+				s.PointRefs[2], s.DeltaZ, s.Value);}
 			break;
 		case Statement::PRZArc:{
 			PRZArc &s = *(PRZArc*)*i;
 			sprintf(cmdbuf, "%u,%u,%u,%f,%u", s.PointRefs[0], s.PointRefs[1], s.Radius,
-				s.DeltaZ, s.Speed);}
+				s.DeltaZ, s.Value);}
 			break;
 		case Statement::Line:{
 			Line &s = *(Line*)*i;
-			sprintf(cmdbuf, "%f,%f,%f,%u", s.DeltaX, s.DeltaY, s.DeltaZ, s.Speed);}
+			sprintf(cmdbuf, "%f,%f,%f,%u", s.DeltaX, s.DeltaY, s.DeltaZ, s.Value);}
 			break;
 		case Statement::Arc:{
 			Arc &s = *(Arc*)*i;
-			sprintf(cmdbuf, "%f,%f,%f,%u", s.Radius, s.StartAngle, s.AngleSpan, s.Speed);}
+			sprintf(cmdbuf, "%f,%f,%f,%u", s.Radius, s.StartAngle, s.AngleSpan, s.Value);}
 			break;
 		case Statement::RelArc:{
 			RelArc &s = *(RelArc*)*i;
-			sprintf(cmdbuf, "%f,%f,%f,%u", s.DeltaX, s.DeltaY, s.Radius, s.Speed);}
+			sprintf(cmdbuf, "%f,%f,%f,%u", s.DeltaX, s.DeltaY, s.Radius, s.Value);}
 			break;
 		case Statement::On:
 		case Statement::Off:{

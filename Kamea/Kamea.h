@@ -21,7 +21,7 @@ public:
 	OpcodeEnum Opcode;
 
 	Statement(OpcodeEnum opc) : Opcode(opc) {}
-	virtual Write(FILE *stream) {fwrite(&Opcode, 1, 1, stream);}
+	virtual void Write(FILE *stream) {fwrite(&Opcode, 1, 1, stream);}
 };
 
 typedef std::list<Statement*> Statements;
@@ -31,7 +31,7 @@ class Speed : public Statement
 public:
 	unsigned Value;
 	Speed(unsigned spd, OpcodeEnum c = Statement::Speed) : Statement(c), Value(spd) {}
-	virtual Write(FILE *stream) {fwrite(&Opcode, 1, 1, stream);}
+	virtual void Write(FILE *stream) {fwrite(&Opcode, 1, 1, stream);}
 };
 
 class Line : public Speed
