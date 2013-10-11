@@ -7,6 +7,7 @@
 #include <stack>
 #include <cassert>
 #include <cstdlib>
+#include <cerrno>
 #include "dxf.h"
 #include "geometry.h"
 
