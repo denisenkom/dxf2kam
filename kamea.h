@@ -1,275 +1,556 @@
-#ifndef KameaH
-#define KameaH
+#ifndef KAMEA_H
+#define KAMEA_H
 
-namespace Denisenko {
-namespace Dxf2Kam {
+#include <stdexcept>
+#include <vector>
+#include <memory>
+#include <algorithm>
+#include "geometry.h"
+
 namespace Kamea {
 
-class Statement
-{
+// opcodes 1 byte
+enum ECmdId {PP_LINE = 0x00, PP_ARC = 0x01, PR_ARC = 0x02, PZ_ARC = 0x03,
+	PRZ_ARC = 0x1e, LINE = 0x04, ARC = 0x06, REL_ARC = 0x07, SET_PARK = 0x08, 
+	GO_PARK = 0x09, SET_ZERO = 0x0a, GO_ZERO = 0x0b, ON = 0x0c,
+	OFF = 0x0d, SPEED = 0x0e, SCALE_X = 0x0f, SCALE_Y = 0x10,
+	SCALE_Z = 0x11, TURN = 0x12, LABEL = 0x13, CALL = 0x14,
+	RET = 0x15, GOTO = 0x16, LOOP = 0x17, ENDLOOP = 0x18,
+	STOP = 0x19, FINISH = 0x1a, COMMENT = 0x1b, PAUSE = 0x1c,
+	SUB = 0x1f, SPLINE = 0x28};	// SPLINE - в новой версии программы
+
+// speeds
+enum ESpeed {SPDDEF=0, SPD1=1, SPD2=2, SPD3=3, SPD4=4, SPD5=5,
+	SPD6=6, SPD7=7, SPD8=8};
+
+// devices
+enum EDevice {SPINDEL=1};
+
+class EParseError : public std::runtime_error {
 public:
-	// opcodes 1 byte
-	enum OpcodeEnum {PPLine = 0x00, PPArc = 0x01, PRArc = 0x02, PZArc = 0x03,
-		PRZArc = 0x1e, Line = 0x04, Arc = 0x06, RelArc = 0x07, SetPark = 0x08, 
-		GoPark = 0x09, SetZero = 0x0a, GoZero = 0x0b, On = 0x0c,
-		Off = 0x0d, Speed = 0x0e, ScaleX = 0x0f, ScaleY = 0x10,
-		ScaleZ = 0x11, Turn = 0x12, Label = 0x13, Call = 0x14,
-		Ret = 0x15, Goto = 0x16, Loop = 0x17, EndLoop = 0x18,
-		Stop = 0x19, Finish = 0x1a, Comment = 0x1b, Pause = 0x1c,
-		Sub = 0x1f, Spline = 0x28};	// SPLINE - в новой версии программы
-
-	OpcodeEnum Opcode;
-
-	Statement(OpcodeEnum opc) : Opcode(opc) {}
-	virtual void Write(FILE *stream) {fwrite(&Opcode, 1, 1, stream);}
-};
-
-typedef std::list<Statement*> Statements;
-
-class Speed : public Statement
-{
-public:
-	unsigned Value;
-	Speed(unsigned spd, OpcodeEnum c = Statement::Speed) : Statement(c), Value(spd) {}
-	virtual void Write(FILE *stream) {fwrite(&Opcode, 1, 1, stream);}
-};
-
-class Line : public Speed
-{
-public:
-	float DeltaX, DeltaY, DeltaZ;
-	Line(float dx, float dy, float dz, unsigned spd)
-		: Speed(spd, Statement::Line), DeltaX(dx), DeltaY(dy), DeltaZ(dz) {}
-};
-
-class PPLine : public Speed
-{
-public:
-	unsigned PointRefs[2];
-	float DeltaZ;
-	bool UpDown;
-	PPLine(unsigned ptRefs[2], float dz, bool upDown, unsigned spd)
-		: Speed(spd, Statement::PPLine), UpDown(upDown), DeltaZ(dz)
-	{
-		PointRefs[0] = ptRefs[0];
-		PointRefs[1] = ptRefs[1];
-	}
-};
-
-class PPArc : public Speed
-{
-public:
-	unsigned PointRefs[3];
-	PPArc(unsigned ptRefs[3], unsigned spd)
-		: Speed(spd, Statement::PPArc)
-	{
-		PointRefs[0] = ptRefs[0];
-		PointRefs[1] = ptRefs[1];
-		PointRefs[2] = ptRefs[2];
-	}
-};
-
-class PRArc : public Speed
-{
-public:
-	unsigned PointRefs[2];
-	float Radius;
-	PRArc(unsigned ptRefs[2], float rad, unsigned spd)
-		: Speed(spd, Statement::PRArc), Radius(rad)
-	{
-		PointRefs[0] = ptRefs[0];
-		PointRefs[1] = ptRefs[1];
-	}
-};
-
-class PZArc : public Speed
-{
-public:
-	unsigned PointRefs[3];
-	float DeltaZ;
-	PZArc(unsigned ptRefs[3], float dz, unsigned spd)
-		: Speed(spd, Statement::PZArc), DeltaZ(dz)
-	{
-		PointRefs[0] = ptRefs[0];
-		PointRefs[1] = ptRefs[1];
-		PointRefs[2] = ptRefs[2];
-	}
-};
-
-class PRZArc : public Speed
-{
-public:
-	unsigned PointRefs[2];
-	float Radius;
-	float DeltaZ;
-	PRZArc(unsigned ptRefs[2], float rad, float dz, unsigned spd)
-		: Speed(spd, Statement::PRZArc), Radius(rad), DeltaZ(dz)
-	{
-		PointRefs[0] = ptRefs[0];
-		PointRefs[1] = ptRefs[1];
-	}
-};
-
-class Arc : public Speed
-{
-public:
-	float Radius;
-	float StartAngle;
-	float AngleSpan;
-	Arc(float rad, float startAngle, float angleSpan, unsigned spd)
-		: Speed(spd, Statement::Arc), Radius(rad), StartAngle(startAngle), AngleSpan(angleSpan)
+	unsigned cmd_indx;
+	EParseError(const char *desc, unsigned cmd_indx)
+		: std::runtime_error(desc), cmd_indx(cmd_indx)
 	{
 	}
 };
 
-class RelArc : public Speed
+class EInvalidCommandId : public EParseError
 {
 public:
-	float DeltaX;
-	float DeltaY;
-	float Radius;
-	RelArc(float dx, float dy, float rad, unsigned spd)
-		: Speed(spd, Statement::RelArc), DeltaX(dx), DeltaY(dy), Radius(rad) {}
+	unsigned cmd_id;
+	EInvalidCommandId(const char *desc, unsigned cmd_indx, unsigned cmd_id)
+		: EParseError(desc, cmd_indx), cmd_id(cmd_id)
+	{
+	}
+
+	/*virtual const char * what(void)
+	{
+		std::stringstream str;
+		str << "#" << (cmd_indx+1) << ": Неправильный код команды: " << std::setbase(16) << cmd_id;
+		return str.str().c_str();
+	}*/
 };
 
-class Scale : public Statement
+class EInvalidCommandLength : public EParseError
 {
 public:
-	unsigned Old;
-	unsigned New;
-	bool Relative;
-
-	Scale(OpcodeEnum c, unsigned old, unsigned nw, bool rel) : Statement(c), Old(old), New(nw), Relative(rel)
+	ECmdId cmd_id;
+	size_t cmd_length;
+	EInvalidCommandLength(const char *desc, unsigned cmd_indx, ECmdId cmd_id, size_t cmd_length)
+		: EParseError(desc, cmd_indx), cmd_id(cmd_id), cmd_length(cmd_length)
 	{
-		assert(c == ScaleX || c == ScaleY || c == ScaleZ);
+	}
+
+	/*virtual const char * what(void)
+	{
+		std::stringstream str;
+		str << "#" << (cmd_indx+1) << ": " << text_names_rus[cmd_id] << ": Неверная длина команды: " << cmd_length;
+		return str.str().c_str();
+	}*/
+};
+
+class EInvalidCommandFormat : public EParseError
+{
+public:
+	ECmdId cmd_id;
+
+	EInvalidCommandFormat(const char *desc, unsigned cmd_indx, ECmdId cmd_id)
+		: EParseError(desc, cmd_indx), cmd_id(cmd_id)
+	{
+	}
+
+	/*virtual const char * what(void)
+	{
+		std::stringstream str;
+		str << "#" << (cmd_indx+1) << ": " << text_names_rus[cmd_id] << ": Неправильный формат команды";
+		return str.str().c_str();
+	}*/
+};
+
+class EInvalidSpeedValue : public EParseError
+{
+public:
+	ECmdId cmd_id;
+	int spd;
+
+	EInvalidSpeedValue(const char *desc, unsigned cmd_indx, ECmdId cmd_id, int spd)
+		: EParseError(desc, cmd_indx), cmd_id(cmd_id), spd(spd)
+	{
+	}
+
+	/*virtual const char * what(void)
+	{
+		std::stringstream str;
+		str << "#" << (cmd_indx+1) << ": " << text_names_rus[cmd_id] << ": Неверное значение скорости: " << spd;
+		return str.str().c_str();
+	}*/
+};
+
+class EInvalidDevice : public EParseError
+{
+public:
+	ECmdId cmd_id;
+	unsigned device;
+
+	EInvalidDevice(const char *desc, unsigned cmd_indx, ECmdId cmd_id, unsigned device)
+		: EParseError(desc, cmd_indx), cmd_id(cmd_id), device(device)
+	{
+	}
+
+	/*virtual const char * what(void)
+	{
+		std::stringstream str;
+		str << "#" << (cmd_indx+1) << ": " << text_names_rus[cmd_id] << ": Неверное устройство: " << device;
+		return str.str().c_str();
+	}*/
+};
+
+class Command {
+public:
+	virtual void dispatch(class Dispatcher&)=0;
+};
+
+class Point {
+public:
+	float x, y;
+
+	Point(void) {}
+
+	Point(float x, float y)
+		: x(x), y(y)
+	{
 	}
 };
 
-class ScaleX : public Scale
-{
-public:
-	ScaleX(unsigned old, unsigned nw, bool rel) : Scale(Statement::ScaleX, old, nw, rel) {}
-};
+typedef std::vector<Command*> t_commands_vector;
+typedef std::vector<Point> t_points_vector;
 
-class ScaleY : public Scale
-{
+class Program {
+	typedef t_commands_vector t_commands;
+	t_commands commands;
+	struct del_cmd {void operator () (Command *pcmd) {delete pcmd;}} del_cmd;
+	struct Zero {void operator() (Command *&pcmd) {pcmd = 0;}} zero;
 public:
-	ScaleY(unsigned old, unsigned nw, bool rel) : Scale(Statement::ScaleX, old, nw, rel) {}
-};
+	typedef t_points_vector t_points;
+	t_points points;
 
-class ScaleZ : public Scale
-{
-public:
-	ScaleZ(unsigned old, unsigned nw, bool rel) : Scale(Statement::ScaleX, old, nw, rel) {}
-};
+	Program(void) {}
 
-class OnOff : public Statement
-{
-public:
-	unsigned Device;
-
-	OnOff(OpcodeEnum c, unsigned device) : Statement(c), Device(device)
+	Program(Program && other)
+		: commands(other.commands), points(other.points)
 	{
-		assert(c == On || c == Off);
+		std::for_each(other.commands.begin(), other.commands.end(), zero);
 	}
-};
 
-class Turn : public Statement
-{
-public:
-	bool MirrorX;
-	bool MirrorY;
-	float Angle;
-
-	Turn(bool mirrorX, bool mirrorY, float angle)
-		: Statement(Statement::Turn), MirrorX(mirrorX), MirrorY(mirrorY), Angle(angle) {}
-};
-
-class Label : public Statement
-{
-public:
-	std::string Value;
-
-	Label(const char *label, OpcodeEnum c = Statement::Label)
-		: Statement(c), Value(label)
+	Program & operator = (Program && other)
 	{
-		assert(c == Comment || c == Sub || c == Goto || c == Statement::Label || c == Call);
+		if (this == &other)
+			return *this;
+		commands = other.commands;
+		points = other.points;
+		std::for_each(other.commands.begin(), other.commands.end(), zero);
+		return *this;
 	}
+
+	~Program() {std::for_each(commands.begin(), commands.end(), del_cmd);}
+	void addCommand(std::auto_ptr<Command> pcommand) {commands.push_back(pcommand.release());}
+	const t_commands & getCommands(void) const {return commands;}
 };
 
-class Comment : public Label {public: Comment(const char *label) : Label(label, Statement::Comment){}};
-class Sub : public Label {public: Sub(const char *label) : Label(label, Statement::Sub){}};
-class Goto : public Label {public: Goto(const char *label) : Label(label, Statement::Goto){}};
-class Call : public Label {public: Call(const char *label) : Label(label, Statement::Call){}};
-
-class Loop : public Statement
-{
+class Dispatcher {
 public:
-	unsigned Iterations;
-
-	Loop(unsigned iters) : Statement(Statement::Loop), Iterations(iters) {}
+	virtual void command(class CPP_LINE&)=0;
+	virtual void command(class CPP_ARC&)=0;
+	virtual void command(class CPR_ARC&)=0;
+	virtual void command(class CPZ_ARC&)=0;
+	virtual void command(class CPRZ_ARC&)=0;
+	virtual void command(class CLINE&)=0;
+	virtual void command(class CARC&)=0;
+	virtual void command(class CREL_ARC&)=0;
+	virtual void command(class CSET_PARK&)=0;
+	virtual void command(class CGO_PARK&)=0;
+	virtual void command(class CSET_ZERO&)=0;
+	virtual void command(class CGO_ZERO&)=0;
+	virtual void command(class CON&)=0;
+	virtual void command(class COFF&)=0;
+	virtual void command(class CSPEED&)=0;
+	virtual void command(class CSCALEX&)=0;
+	virtual void command(class CSCALEY&)=0;
+	virtual void command(class CSCALEZ&)=0;
+	virtual void command(class CTURN&)=0;
+	virtual void command(class CSUB&)=0;
+	virtual void command(class CCALL&)=0;
+	virtual void command(class CRET&)=0;
+	virtual void command(class CLABEL&)=0;
+	virtual void command(class CGOTO&)=0;
+	virtual void command(class CLOOP&)=0;
+	virtual void command(class CENDLOOP&)=0;
+	virtual void command(class CSTOP&)=0;
+	virtual void command(class CFINISH&)=0;
+	virtual void command(class CCOMMENT&)=0;
+	virtual void command(class CPAUSE&)=0;
+	virtual void command(class CSPLINE&)=0;
 };
 
-class Pause : public Statement
-{
+class CPP_LINE : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
-	float Delay;
-
-	Pause(float delay) : Statement(Statement::Pause), Delay(delay) {}
+	const static ECmdId id = PP_LINE;
+	unsigned startPoint, endPoint;
+	float deltaZ;
+	bool UpAndDown;
+	ESpeed speed;
+	CPP_LINE(int startPoint, int endPoint, float deltaZ, bool UpAndDown=false, ESpeed speed=SPDDEF) : 
+		startPoint(startPoint), endPoint(endPoint), deltaZ(deltaZ), UpAndDown(UpAndDown), speed(speed) {}
 };
 
-class Spline : public Statement
-{
+class CPP_ARC : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
 public:
-	unsigned PointRefs[4];
+	const static ECmdId id = PP_ARC;
+	unsigned startPoint, midPoint, endPoint;
+	ESpeed speed;
+	CPP_ARC(int startPoint, int midPoint, int endPoint, ESpeed spd=SPDDEF) : startPoint(startPoint), 
+		midPoint(midPoint), endPoint(endPoint), speed(spd) {};
+};
 
-	Spline(unsigned ptRefs[4]) : Statement(Statement::Spline)
+class CPR_ARC : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = PR_ARC;
+	unsigned startPoint, endPoint;
+	float radius;
+	ESpeed speed;
+	CPR_ARC(int startPoint, int endPoint, float radius, ESpeed speed=SPDDEF) :
+		startPoint(startPoint), endPoint(endPoint), radius(radius), speed(speed) {};
+};
+
+class CPZ_ARC : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = PZ_ARC;
+	unsigned startPoint, midPoint, endPoint;
+	float deltaZ;
+	ESpeed speed;
+	CPZ_ARC(int startPoint, int midPoint, int endPoint, float deltaZ, ESpeed speed=SPDDEF) : 
+		startPoint(startPoint), midPoint(midPoint), endPoint(endPoint), deltaZ(deltaZ),
+		speed(speed) {};
+};
+
+class CPRZ_ARC : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = PRZ_ARC;
+	unsigned startPoint, endPoint;
+	float radius, deltaZ;
+	ESpeed speed;
+	CPRZ_ARC(int startPoint, int endPoint, float radius, float deltaZ, ESpeed speed=SPDDEF) : 
+		startPoint(startPoint), endPoint(endPoint), radius(radius), deltaZ(deltaZ),
+		speed(speed) {};
+};
+
+class CLINE : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = LINE;
+	float dx, dy, dz;
+	ESpeed speed;
+	CLINE(float dx, float dy, float dz, ESpeed speed=SPDDEF) : dx(dx), dy(dy), dz(dz),
+		speed(speed) {};
+};
+
+class CARC : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = ARC;
+	float radius, al, fi;
+	ESpeed speed;
+	CARC(float radius, float al, float fi, ESpeed speed=SPDDEF) : radius(radius), al(al),
+		fi(fi), speed(speed) {};
+};
+
+class CREL_ARC : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = REL_ARC;
+	float dx, dy, radius;
+	ESpeed speed;
+	CREL_ARC(float dx, float dy, float radius, ESpeed speed=SPDDEF) : dx(dx), dy(dy),
+		radius(radius), speed(speed) {};
+};
+
+class CSET_PARK : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SET_PARK;
+	CSET_PARK() {};
+};
+
+class CGO_PARK : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = GO_PARK;
+	CGO_PARK() {};
+};
+
+class CSET_ZERO : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SET_ZERO;
+	CSET_ZERO() {};
+};
+
+class CGO_ZERO : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = GO_ZERO;
+	CGO_ZERO() {};
+};
+
+class CON : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = ON;
+	EDevice device;
+	CON(EDevice device) : device(device) {};
+};
+
+class COFF : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = OFF;
+	EDevice device;
+	COFF(EDevice device) : device(device) {};
+};
+
+class CSPEED : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SPEED;
+	ESpeed speed;
+	CSPEED(ESpeed speed) : speed(speed) {};
+};
+
+class CSCALEX : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SCALE_X;
+	bool relative;
+	unsigned old_scale, new_scale;
+	CSCALEX(unsigned old_scale, unsigned new_scale, bool relative=false) : relative(relative), old_scale(old_scale),
+		new_scale(new_scale) {};
+};
+
+class CSCALEY : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SCALE_Y;
+	bool relative;
+	unsigned old_scale, new_scale;
+	CSCALEY(unsigned old_scale, unsigned new_scale, bool relative=false) : relative(relative), old_scale(old_scale),
+		new_scale(new_scale) {};
+};
+
+class CSCALEZ : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SCALE_Z;
+	bool relative;
+	unsigned old_scale, new_scale;
+	CSCALEZ(unsigned old_scale, unsigned new_scale, bool relative=false) : relative(relative), old_scale(old_scale),
+		new_scale(new_scale) {};
+};
+
+class CTURN : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = TURN;
+	bool mirrorX;
+	bool mirrorY;
+	float angle;
+	CTURN(bool mirrorX, bool mirrorY, float angle) : mirrorX(mirrorX), mirrorY(mirrorY),
+		angle(angle) {};
+};
+
+class CSUB : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = SUB;
+	std::string name;
+	CSUB(const std::string name) : name(name) {};
+};
+
+class CCALL : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = CALL;
+	std::string sub_name;
+	CCALL(const std::string sub_name) : sub_name(sub_name) {};
+};
+
+class CRET : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = RET;
+};
+
+class CLABEL : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = LABEL;
+	std::string name;
+	CLABEL(const std::string name) : name(name) {};
+};
+
+class CGOTO : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = GOTO;
+	std::string label_name;
+	CGOTO(const std::string label_name) : label_name(label_name) {};
+};
+
+class CLOOP : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = LOOP;
+	unsigned n;
+	CLOOP(unsigned n) : n(n) {};
+};
+
+class CENDLOOP : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = ENDLOOP;
+};
+
+class CSTOP : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = STOP;
+};
+
+class CFINISH : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = FINISH;
+};
+
+class CCOMMENT : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = COMMENT;
+	std::string comment;
+	CCOMMENT(const std::string comment) : comment(comment) {};
+};
+
+class CPAUSE : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	const static ECmdId id = PAUSE;
+	float delay;
+	CPAUSE(float delay) : delay(delay) {};
+};
+
+class CSPLINE : public Command {
+	void dispatch(Dispatcher& dispatcher) {dispatcher.command(*this);};
+public:
+	unsigned p1, p2, p3, p4;
+	CSPLINE(unsigned p1, unsigned p2, unsigned p3, unsigned p4)	: p1(p1), p2(p2), p3(p3), p4(p4) {}
+};
+
+	class EInvalidSpeed : public std::runtime_error
 	{
-		PointRefs[0] = ptRefs[0];
-		PointRefs[1] = ptRefs[1];
-		PointRefs[2] = ptRefs[2];
-		PointRefs[3] = ptRefs[3];
-	}
-};
-
-class Point
-{
-public:
-	union {
-		struct {
-			float X;
-			float Y;
-		};
-		float Coords[2];
+	public:
+		ESpeed spd;
+		EInvalidSpeed(const char *desc, ESpeed spd)
+			: std::runtime_error(desc), spd(spd)
+		{
+		}
 	};
 
-	Point(float x, float y) : X(x), Y(y) {}
-	Point(float coords[2]) : X(coords[0]), Y(coords[1]) {}
-};
+	class Modeler {
+	public:
+		virtual void switchDevice(EDevice, bool on)=0;
+		virtual bool getDevice(EDevice)=0;
+		virtual void setSpeed(ESpeed) = 0;
+		virtual ESpeed getSpeed(void) = 0;
 
-typedef std::list<Point> Points;
+		virtual void setMirror(const bool xy[2])=0;
+		virtual void getMirror(bool xy[2])=0;
+		virtual void setRotate(float angle)=0;
+		virtual float getRotate(void)=0;
+		virtual void setScale(const float xyz[3])=0;
+		virtual void getScale(float xyz[3])=0;
 
-class Program
-{
-public:
-	Statements Statements;
-	Points Points;
+		virtual void moveto(const float xy[2])=0;	// Moves spindle to position xy0
+		virtual void displace(const float disp[3], ESpeed spd=SPDDEF)=0;	// Displaces spindle
+		virtual void arc(float rad, float al, float fi, ESpeed spd=SPDDEF)=0;
+		//virtual void line(const float xyz1[3], const float xyz2[3])=0;
 
-	void LoadKam(const char* fileName);
-	void LoadTxt(const char* fileName);
-	void SaveKam(const char* fileName);
-	//void SaveKam(IStream& stream);
-	void SaveTxt(const char* fileName);
-	//void SaveTxt(IStream& stream);
-};
+		virtual MyGeometryTools::vec3f getPos(void)=0;
+	};
 
-class InvalidOpcode {};
-class InvalidCommandLength {};
-class InvalidCommandFormat {};
-class InvalidSpeedValue {};
+	class ProgramWriter : Modeler {
+		MyGeometryTools::vec3f pos;
+		ESpeed speed;
+		bool spindle;
+		float rotate_angle;
+		MyGeometryTools::vec3f scale;
+		bool mirror_xy[2];
+		Program program;
+		MyGeometryTools::vec3f tform(MyGeometryTools::vec3f vec);
+	public:
+		ESpeed move_speed, cut_speed;
+		float move_z;
 
-} // namespace Kamea
-} // namespace Dxf2Kam
-} // namespace Denisenko
+		virtual void switchDevice(EDevice, bool on);
+		virtual bool getDevice(EDevice);
+		virtual void setSpeed(ESpeed);
+		virtual ESpeed getSpeed();
 
-#endif KameaH
+		virtual void setMirror(const bool xy[2]);
+		virtual void getMirror(bool xy[2]);
+		virtual void setRotate(float angle);
+		virtual float getRotate(void);
+		virtual void setScale(const float xyz[3]);
+		virtual void getScale(float xy[2]);
+
+		virtual void moveto(const float xy[2]);
+		virtual void displace(const float disp[3], ESpeed spd=SPDDEF);
+		virtual void arc(float rad, float al, float fi, ESpeed spd=SPDDEF);
+		//virtual void line(const float xyz1[3], const float xyz2[3]);
+
+		virtual MyGeometryTools::vec3f getPos(void);
+
+		ProgramWriter();
+		void begin(void);
+		Program end(void);
+	};
+
+	class Program load(std::istream&);
+	void save(std::ostream&, class Program&);
+}	// namespace Kamea
+
+#endif
