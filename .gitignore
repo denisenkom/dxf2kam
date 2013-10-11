@@ -1,0 +1,8 @@
+*.ncb
+*.suo
+*.vssscc
+*.vspscc
+*.scc
+*.user
+Debug
+Release
